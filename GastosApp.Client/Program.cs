@@ -11,7 +11,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 
 // Registramos nuestro servicio Supabase como singleton (uno solo para toda la app)
 builder.Services.AddSingleton<SupabaseService>();
-
+builder.Services.AddSingleton<AuthService>();
 var host = builder.Build();
 
 // Inicializamos la conexión de Supabase antes de arrancar

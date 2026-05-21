@@ -1,0 +1,70 @@
+@page "/login"
+@using GastosApp.Client.Services
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<PageTitle>Iniciar sesión</PageTitle>
+
+<div class="container" style="max-width: 400px; margin-top: 80px;">
+    <h2>Iniciar sesión</h2>
+
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" @bind="email" @bind:event="oninput" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Contraseña</label>
+        <input type="password" class="form-control" @bind="password" @bind:event="oninput" />
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <button class="btn btn-primary w-100" @onclick="HandleLogin" disabled="@isLoading">
+        @if (isLoading)
+        {
+            <span>Entrando...</span>
+        }
+        else
+        {
+            <span>Entrar</span>
+        }
+    </button>
+</div>
+
+@code {
+    private string email = "";
+    private string password = "";
+    private string errorMessage = "";
+    private bool isLoading = false;
+
+    private async Task HandleLogin()
+    {
+        errorMessage = "";
+        isLoading = true;
+
+        try
+        {
+            var session = await Auth.SignInAsync(email, password);
+            if (session is not null)
+            {
+                Nav.NavigateTo("/");
+            }
+            else
+            {
+                errorMessage = "No se pudo iniciar sesión. Comprueba el email y la contraseña.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
