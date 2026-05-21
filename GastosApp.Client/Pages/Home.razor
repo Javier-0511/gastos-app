@@ -24,13 +24,13 @@ else
     {
         if (!Auth.IsLoggedIn)
         {
-            Nav.NavigateTo("/login");
+            Nav.NavigateTo("login");
         }
     }
 
     private async Task HandleLogout()
     {
         await Auth.SignOutAsync();
-        Nav.NavigateTo("/login");
+        Nav.NavigateTo("login");
     }
 }

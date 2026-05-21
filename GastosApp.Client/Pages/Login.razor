@@ -51,7 +51,7 @@
             var session = await Auth.SignInAsync(email, password);
             if (session is not null)
             {
-                Nav.NavigateTo("/");
+                Nav.NavigateTo("");
             }
             else
             {
