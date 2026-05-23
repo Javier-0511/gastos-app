@@ -1,16 +1,35 @@
-﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@inherits LayoutComponentBase
+@using GastosApp.Client.Services
+@implements IDisposable
+@inject AuthService Auth
+
+<div class="page @(Auth.IsLoggedIn ? "" : "no-sidebar")">
+    @if (Auth.IsLoggedIn)
+    {
+        <div class="sidebar">
+            <NavMenu />
+        </div>
+    }
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
         <article class="content px-4">
             @Body
         </article>
     </main>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Cuando cambia la sesión (login/logout), forzamos repintado para
+        // mostrar u ocultar el sidebar.
+        Auth.OnAuthStateChanged += HandleAuthChanged;
+    }
+
+    private void HandleAuthChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Auth.OnAuthStateChanged -= HandleAuthChanged;
+    }
+}

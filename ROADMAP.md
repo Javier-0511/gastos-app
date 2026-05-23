@@ -89,7 +89,9 @@ Equivalente al H15/H16 del Excel.
 - [x] Bonus: botón "+ Añadir gasto" en `/mes` que preselecciona la cuenta activa (`/nuevo-gasto?accountId={guid}`).
 - [ ] ~~Saldo bancario acumulativo~~ → **Pospuesto**. Discutido: distinguir "cuánto me sobra este mes" (flujo de caja) de "cuánto hay en el banco" (saldo acumulado). El segundo requiere registro exhaustivo y suele descuadrar con el banco real. Volveremos cuando esté más claro qué se necesita.
 
-### 2.6 — Importar histórico del Excel
+### 2.6 — Importar histórico del Excel [POSPUESTO]
+
+> 2026-05-23: Javi decide no importarlo de momento. Se queda como tarea opcional para cuando tenga ganas. El histórico no es crítico — la app ya es usable desde hoy hacia adelante.
 
 - [ ] Script (C# o consola) que lea el Excel actual (Sept 2025 - May 2026).
 - [ ] Mapear filas a `expenses` con cuenta, categoría, fecha, importe.
@@ -98,13 +100,19 @@ Equivalente al H15/H16 del Excel.
 
 ---
 
-## ⚪ Fase 3 — Pulido y mejoras
+## 🟡 Fase 3 — Pulido y mejoras
 
 - [ ] Dashboard / resumen con gráficos (recharts equivalente para Blazor, o JS interop).
 - [ ] Vista de categorías con tarta de gastos.
 - [ ] Filtros y búsqueda en histórico.
 - [ ] Edición masiva de gastos.
-- [ ] Personalizar nombre de app, icono, colores (sustituir branding default de Blazor).
+- [x] Personalizar nombre de app, icono, colores (sustituir branding default de Blazor).
+    - App renombrada a "Gastos" en title, manifest, navbar.
+    - Paleta grafito + indigo: variables CSS en `app.css` (`--accent`, `--accent-hover`, `--accent-soft`, `--surface-dark`, `--surface-deep`).
+    - Sidebar con gradiente vertical (grafito → indigo oscuro).
+    - Icono SVG generado (G indigo sobre fondo con el mismo gradiente).
+    - Sidebar oculto cuando no estás logueado (MainLayout suscrito a `AuthService.OnAuthStateChanged`).
+    - Limpieza: link "About" eliminado, `sample-data/weather.json` y PNGs del template borrados.
 - [ ] Modo oscuro.
 - [ ] Animaciones/transiciones suaves.
 
