@@ -1,0 +1,80 @@
+@page "/setup"
+@using GastosApp.Client.Services
+@inject AuthService Auth
+@inject AccountService Accounts
+@inject NavigationManager Nav
+
+<PageTitle>Configuración inicial</PageTitle>
+
+<div class="container" style="max-width: 500px; margin-top: 60px;">
+    <h2>¡Bienvenido!</h2>
+    <p>Vamos a crear tus dos cuentas para empezar. Puedes cambiar los nombres si quieres.</p>
+
+    <div class="mb-3">
+        <label class="form-label">Cuenta personal</label>
+        <input class="form-control" @bind="personalName" @bind:event="oninput" />
+        <small class="text-muted">Para gastos que pagas con tu tarjeta personal.</small>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Cuenta compartida</label>
+        <input class="form-control" @bind="sharedName" @bind:event="oninput" />
+        <small class="text-muted">Para gastos pagados con la tarjeta compartida (50/50 con Marta).</small>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <button class="btn btn-primary w-100" @onclick="HandleCreate" disabled="@(isLoading || !IsValid)">
+        @if (isLoading)
+        {
+            <span>Creando...</span>
+        }
+        else
+        {
+            <span>Crear mis cuentas</span>
+        }
+    </button>
+</div>
+
+@code {
+    private string personalName = "Personal";
+    private string sharedName = "Compartida";
+    private string errorMessage = "";
+    private bool isLoading = false;
+
+    private bool IsValid =>
+        !string.IsNullOrWhiteSpace(personalName) &&
+        !string.IsNullOrWhiteSpace(sharedName);
+
+    protected override void OnInitialized()
+    {
+        if (!Auth.IsLoggedIn)
+        {
+            Nav.NavigateTo("login");
+        }
+    }
+
+    private async Task HandleCreate()
+    {
+        errorMessage = "";
+        isLoading = true;
+
+        try
+        {
+            await Accounts.CreateAccountAsync(personalName.Trim(), isShared: false);
+            await Accounts.CreateAccountAsync(sharedName.Trim(), isShared: true);
+            Nav.NavigateTo("");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al crear las cuentas: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

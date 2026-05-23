@@ -1,13 +1,14 @@
-﻿@page "/"
+@page "/"
 @using GastosApp.Client.Services
 @inject AuthService Auth
+@inject AccountService Accounts
 @inject NavigationManager Nav
 
 <PageTitle>Inicio</PageTitle>
 
-@if (!Auth.IsLoggedIn)
+@if (isChecking)
 {
-    <p>Redirigiendo al login...</p>
+    <p>Cargando...</p>
 }
 else
 {
@@ -20,12 +21,24 @@ else
 }
 
 @code {
-    protected override void OnInitialized()
+    private bool isChecking = true;
+
+    protected override async Task OnInitializedAsync()
     {
         if (!Auth.IsLoggedIn)
         {
             Nav.NavigateTo("login");
+            return;
         }
+
+        var accounts = await Accounts.GetMyAccountsAsync();
+        if (accounts.Count == 0)
+        {
+            Nav.NavigateTo("setup");
+            return;
+        }
+
+        isChecking = false;
     }
 
     private async Task HandleLogout()
