@@ -5,35 +5,100 @@
 
 <PageTitle>Iniciar sesión</PageTitle>
 
-<div class="container" style="max-width: 400px; margin-top: 80px;">
-    <h2>Iniciar sesión</h2>
+<div class="login-screen">
+    <form class="login-card" @onsubmit="HandleLogin" @onsubmit:preventDefault="true">
+        <div class="login-header">
+            <img src="icon.svg" alt="Gastos" class="login-logo" />
+            <h1 class="login-title">Gastos</h1>
+            <p class="login-subtitle">Inicia sesión para continuar</p>
+        </div>
 
-    <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input type="email" class="form-control" @bind="email" @bind:event="oninput" />
-    </div>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email"
+                   class="form-control form-control-lg"
+                   placeholder="tu@email.com"
+                   autocomplete="email"
+                   @bind="email"
+                   @bind:event="oninput" />
+        </div>
 
-    <div class="mb-3">
-        <label class="form-label">Contraseña</label>
-        <input type="password" class="form-control" @bind="password" @bind:event="oninput" />
-    </div>
+        <div class="mb-3">
+            <label class="form-label">Contraseña</label>
+            <input type="password"
+                   class="form-control form-control-lg"
+                   placeholder="••••••••"
+                   autocomplete="current-password"
+                   @bind="password"
+                   @bind:event="oninput" />
+        </div>
 
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger">@errorMessage</div>
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger small">@errorMessage</div>
+        }
+
+        <button type="submit"
+                class="btn btn-primary btn-lg w-100 mt-2"
+                disabled="@(isLoading || !IsValid)">
+            @if (isLoading)
+            {
+                <span>Entrando...</span>
+            }
+            else
+            {
+                <span>Entrar</span>
+            }
+        </button>
+    </form>
+</div>
+
+<style>
+    .login-screen {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(135deg, var(--surface-dark) 0%, var(--surface-deep) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+        overflow-y: auto;
+        z-index: 1;
     }
 
-    <button class="btn btn-primary w-100" @onclick="HandleLogin" disabled="@isLoading">
-        @if (isLoading)
-        {
-            <span>Entrando...</span>
-        }
-        else
-        {
-            <span>Entrar</span>
-        }
-    </button>
-</div>
+    .login-card {
+        background: white;
+        border-radius: 16px;
+        padding: 40px 32px 32px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 28px;
+    }
+
+    .login-logo {
+        width: 84px;
+        height: 84px;
+        margin-bottom: 12px;
+    }
+
+    .login-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--surface-dark);
+    }
+
+    .login-subtitle {
+        color: #6c757d;
+        margin: 4px 0 0;
+        font-size: 0.95rem;
+    }
+</style>
 
 @code {
     private string email = "";
@@ -41,8 +106,13 @@
     private string errorMessage = "";
     private bool isLoading = false;
 
+    private bool IsValid =>
+        !string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(password);
+
     private async Task HandleLogin()
     {
+        if (!IsValid) return;
+
         errorMessage = "";
         isLoading = true;
 

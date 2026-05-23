@@ -1,39 +1,222 @@
 @page "/"
+@using System.Globalization
 @using GastosApp.Client.Services
 @inject AuthService Auth
 @inject AccountService Accounts
+@inject ExpenseService Expenses
 @inject NavigationManager Nav
 
 <PageTitle>Inicio</PageTitle>
 
 @if (isChecking)
 {
-    <p>Cargando...</p>
+    <p class="text-center mt-4">Cargando...</p>
 }
 else
 {
-    <h1>¡Hola, @Auth.CurrentUser?.Email!</h1>
-    <p>Estás dentro de tu app de gastos.</p>
+    <div class="home-container">
 
-    <div class="d-grid gap-2 my-4" style="max-width: 400px;">
-        <a href="nuevo-gasto" class="btn btn-primary btn-lg">
-            + Añadir gasto
+        @* Botón logout discreto arriba *@
+        <div class="d-flex justify-content-end mb-2">
+            <button class="btn btn-sm btn-link text-muted text-decoration-none"
+                    @onclick="HandleLogout">
+                Cerrar sesión
+            </button>
+        </div>
+
+        @* Hero: saludo + resumen *@
+        <div class="hero">
+            <p class="hero-greeting">@Greeting</p>
+            <h1 class="hero-title">Bienvenido de vuelta</h1>
+
+            <div class="hero-summary">
+                <span class="hero-summary-label">Gastado este mes</span>
+                <span class="hero-summary-value">@FormatMoney(monthTotal)</span>
+            </div>
+        </div>
+
+        @* CTA principal: añadir gasto *@
+        <a href="nuevo-gasto" class="cta-card cta-primary">
+            <div class="cta-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                </svg>
+            </div>
+            <div class="cta-body">
+                <div class="cta-title">Añadir gasto</div>
+                <div class="cta-subtitle">Registra un gasto nuevo</div>
+            </div>
         </a>
-        <a href="mes" class="btn btn-outline-primary">
-            Ver gastos del mes
-        </a>
-        <a href="categorias" class="btn btn-outline-secondary">
-            Gestionar categorías
-        </a>
+
+        @* CTAs secundarios en grid de 2 *@
+        <div class="cta-grid">
+            <a href="mes" class="cta-card">
+                <div class="cta-icon-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM1 3.857C1 3.384 1.448 3 2 3h12c.552 0 1 .384 1 .857v10.286c0 .473-.448.857-1 .857H2c-.552 0-1-.384-1-.857V3.857z"/>
+                        <path d="M6.5 7a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-9 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-9 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                    </svg>
+                </div>
+                <div class="cta-body">
+                    <div class="cta-title-sm">Vista del mes</div>
+                </div>
+            </a>
+
+            <a href="categorias" class="cta-card">
+                <div class="cta-icon-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M4.5 11.5A.5.5 0 0 1 5 11h10a.5.5 0 0 1 0 1H5a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 3 7h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm-2-4A.5.5 0 0 1 1 3h10a.5.5 0 0 1 0 1H1a.5.5 0 0 1-.5-.5z"/>
+                    </svg>
+                </div>
+                <div class="cta-body">
+                    <div class="cta-title-sm">Categorías</div>
+                </div>
+            </a>
+        </div>
     </div>
-
-    <button class="btn btn-outline-secondary btn-sm" @onclick="HandleLogout">
-        Cerrar sesión
-    </button>
 }
+
+<style>
+    .home-container {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 8px 16px 32px;
+    }
+
+    .hero {
+        margin-bottom: 28px;
+    }
+
+    .hero-greeting {
+        color: #6c757d;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .hero-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin: 2px 0 18px;
+        color: var(--surface-dark);
+    }
+
+    .hero-summary {
+        background: linear-gradient(135deg, var(--surface-dark) 0%, var(--surface-deep) 100%);
+        border-radius: 16px;
+        padding: 20px 22px;
+        color: white;
+        box-shadow: 0 10px 30px rgba(30, 27, 75, 0.25);
+    }
+
+    .hero-summary-label {
+        display: block;
+        font-size: 0.85rem;
+        opacity: 0.7;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .hero-summary-value {
+        display: block;
+        font-size: 2rem;
+        font-weight: 700;
+        margin-top: 4px;
+    }
+
+    /* CTAs como tarjetas */
+    .cta-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin-bottom: 12px;
+        text-decoration: none;
+        color: inherit;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .cta-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        border-color: var(--accent);
+        color: inherit;
+    }
+
+    .cta-primary {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+    }
+
+    .cta-primary:hover {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+        color: white;
+    }
+
+    .cta-icon {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .cta-icon-secondary {
+        background: var(--accent-soft);
+        color: var(--accent);
+        border-radius: 10px;
+        padding: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .cta-body { flex: 1; }
+
+    .cta-title {
+        font-weight: 600;
+        font-size: 1.05rem;
+    }
+
+    .cta-subtitle {
+        font-size: 0.85rem;
+        opacity: 0.85;
+        margin-top: 1px;
+    }
+
+    .cta-title-sm {
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .cta-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 4px;
+    }
+
+    .cta-grid .cta-card {
+        margin-bottom: 0;
+    }
+</style>
 
 @code {
     private bool isChecking = true;
+    private decimal monthTotal = 0;
+
+    private string Greeting => DateTime.Now.Hour switch
+    {
+        < 6  => "Buenas noches",
+        < 13 => "Buenos días",
+        < 21 => "Buenas tardes",
+        _    => "Buenas noches"
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -50,6 +233,19 @@ else
             return;
         }
 
+        // Resumen rápido: total gastado este mes (todas las cuentas).
+        try
+        {
+            var today = DateTime.Today;
+            var expenses = await Expenses.GetByMonthAsync(today.Year, today.Month);
+            monthTotal = expenses.Sum(e => e.Amount);
+        }
+        catch
+        {
+            // Si falla el resumen, no rompemos la pantalla.
+            monthTotal = 0;
+        }
+
         isChecking = false;
     }
 
@@ -58,4 +254,7 @@ else
         await Auth.SignOutAsync();
         Nav.NavigateTo("login");
     }
+
+    private static string FormatMoney(decimal amount) =>
+        amount.ToString("N2", new CultureInfo("es-ES")) + " €";
 }
