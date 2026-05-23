@@ -73,7 +73,23 @@ else
                    @bind:event="oninput" />
         </div>
 
-        @* Categoría — chips horizontales *@
+        @* Selector de bloque (solo si la cuenta tiene >1 bloque disponible) *@
+        @if (BlocksForSelectedAccount().Length > 1)
+        {
+            <div class="mb-3">
+                <label class="form-label">Bloque</label>
+                <select class="form-select"
+                        value="@selectedBlock"
+                        @onchange="OnBlockChanged">
+                    @foreach (var b in BlocksForSelectedAccount())
+                    {
+                        <option value="@b">@BlockLabel(b)</option>
+                    }
+                </select>
+            </div>
+        }
+
+        @* Categoría — chips filtrados por bloque *@
         <div class="mb-3">
             <label class="form-label">Categoría</label>
             @if (categories.Count == 0)
@@ -83,10 +99,17 @@ else
                     <a href="categorias">Crear categorías</a>.
                 </div>
             }
+            else if (filteredCategories.Count == 0)
+            {
+                <div class="alert alert-warning small mb-0">
+                    No hay categorías en este bloque.
+                    <a href="categorias">Crear una</a>.
+                </div>
+            }
             else
             {
                 <div class="chips-row">
-                    @foreach (var cat in categories)
+                    @foreach (var cat in filteredCategories)
                     {
                         <button type="button"
                                 class="chip @(selectedCategoryId == cat.Id ? "chip-selected" : "")"
@@ -191,9 +214,18 @@ else
 
     private Guid selectedAccountId;
     private Guid? selectedCategoryId;
+    private string? selectedBlock;
     private decimal? amount;
     private string description = "";
     private DateTime expenseDate = DateTime.Today;
+
+    private static readonly string[] SharedBlocks = { "fijo", "comida", "variable", "minicompra" };
+    private static readonly string[] PersonalBlocks = { "individual" };
+
+    private List<Category> filteredCategories =>
+        selectedBlock is null
+            ? new List<Category>()
+            : categories.Where(c => c.Block == selectedBlock).ToList();
 
     private bool IsValid =>
         selectedAccountId != Guid.Empty
@@ -252,6 +284,14 @@ else
             selectedAccountId = expense.AccountId;
             await LoadCategories();
 
+            // En edición pre-seleccionamos el bloque de la categoría del gasto
+            // para que los chips se filtren igual que cuando se creó.
+            var existingCat = categories.FirstOrDefault(c => c.Id == expense.CategoryId);
+            if (existingCat is not null)
+            {
+                selectedBlock = existingCat.Block;
+            }
+
             selectedCategoryId = expense.CategoryId;
             amount = expense.Amount;
             description = expense.Description ?? "";
@@ -269,6 +309,7 @@ else
     {
         selectedAccountId = accountId;
         selectedCategoryId = null;
+        selectedBlock = null;
         await LoadCategories();
     }
 
@@ -280,12 +321,51 @@ else
                 .OrderBy(c => c.Name)
                 .ToList();
             errorMessage = "";
+
+            // Auto-seleccionar el primer bloque si no hay ninguno seleccionado
+            // y al menos hay categorías de un bloque.
+            if (selectedBlock is null)
+            {
+                var blocks = BlocksForSelectedAccount();
+                selectedBlock = blocks.FirstOrDefault(b => categories.Any(c => c.Block == b))
+                                ?? blocks.FirstOrDefault();
+            }
         }
         catch (Exception ex)
         {
             errorMessage = $"Error al cargar categorías: {ex.Message}";
         }
     }
+
+    private void OnBlockChanged(ChangeEventArgs e)
+    {
+        selectedBlock = e.Value?.ToString();
+        // Si la categoría seleccionada ya no pertenece al nuevo bloque, la limpiamos.
+        if (selectedCategoryId.HasValue)
+        {
+            var current = categories.FirstOrDefault(c => c.Id == selectedCategoryId.Value);
+            if (current is null || current.Block != selectedBlock)
+            {
+                selectedCategoryId = null;
+            }
+        }
+    }
+
+    private string[] BlocksForSelectedAccount()
+    {
+        var acc = accounts.FirstOrDefault(a => a.Id == selectedAccountId);
+        return acc?.IsShared == true ? SharedBlocks : PersonalBlocks;
+    }
+
+    private static string BlockLabel(string block) => block switch
+    {
+        "fijo" => "Fijos",
+        "comida" => "Comida",
+        "variable" => "Variables",
+        "minicompra" => "Minicompras",
+        "individual" => "Individual",
+        _ => block
+    };
 
     private async Task HandleSave()
     {
