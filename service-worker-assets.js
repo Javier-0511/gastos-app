@@ -1,13 +1,13 @@
 self.assetsManifest = {
-  "version": "nVAqlGQ0",
+  "version": "KHvyblRT",
   "assets": [
     {
-      "hash": "sha256-cVuPjK0xM/tnm1/mYrfg8SOuiCDlDWJnXEAJfrSjovs=",
+      "hash": "sha256-AhF93OuhbJutXMEkIBTrPogLVjeuGgjJhGUv2UX2v1Y=",
       "url": "GastosApp.Client.styles.css"
     },
     {
-      "hash": "sha256-eSrzXEZ3TtVyEtL6sX1hQeL1GXuesPSNy77pSblPDsE=",
-      "url": "_framework/GastosApp.Client.9ox8ins0xd.wasm"
+      "hash": "sha256-UGLbUTmttkMb/G90zaeT54a+As0qymyElN1Mn51ORsI=",
+      "url": "_framework/GastosApp.Client.o6uqj91e32.wasm"
     },
     {
       "hash": "sha256-NXn2q2hB5JW8TdFeUv7j87GeMvLtMITHcMo93l4gksM=",
@@ -374,8 +374,8 @@ self.assetsManifest = {
       "url": "_framework/dotnet.runtime.r2kbxkuujc.js"
     },
     {
-      "hash": "sha256-6gSfkalQNPRONW8VTcEj8tasaNT+y0ux+J/OABwWLAs=",
-      "url": "_framework/dotnet.yamk7s8m5b.js"
+      "hash": "sha256-BOC5O87gTSeFskm6wrY89ipmIpxXpDNT7gJCjj2ZZbs=",
+      "url": "_framework/dotnet.w7q19vm8va.js"
     },
     {
       "hash": "sha256-SZLtQnRc0JkwqHab0VUVP7T3uBPSeYzxzDnpxPpUnHk=",
@@ -398,23 +398,15 @@ self.assetsManifest = {
       "url": "appsettings.json"
     },
     {
-      "hash": "sha256-CsChHlHUYGbuIEdR+5X9lxWNazWkgwxEsDPWRPQmRpQ=",
+      "hash": "sha256-0HrVfr6EfKE+CjXD0zqvw/qGYBmoBAhxg3qYUbOp7Nc=",
       "url": "css/app.css"
     },
     {
-      "hash": "sha256-4mWsDy3aHl36ZbGt8zByK7Pvd4kRUoNgTYzRnwmPHwg=",
-      "url": "favicon.png"
+      "hash": "sha256-1GMX5qLLslhvIH5sSlfWNgajpGPCF1cAUMNG3P67d/8=",
+      "url": "icon.svg"
     },
     {
-      "hash": "sha256-DbpQaq68ZSb5IoPosBErM1QWBfsbTxpJqhU0REi6wP4=",
-      "url": "icon-192.png"
-    },
-    {
-      "hash": "sha256-oEo6d+KqX5fjxTiZk/w9NB3Mi0+ycS5yLwCKwr4IkbA=",
-      "url": "icon-512.png"
-    },
-    {
-      "hash": "sha256-nQFQ9SogwRnbgnYpgHWQNyhiKh9Z5dzW8c/cSzKxXpc=",
+      "hash": "sha256-RpkNmrTbU9I2LPZpp9mVoIngWlIzFQ/+exenA5oScBk=",
       "url": "index.html"
     },
     {
@@ -594,12 +586,8 @@ self.assetsManifest = {
       "url": "lib/bootstrap/dist/js/bootstrap.min.js.map"
     },
     {
-      "hash": "sha256-impCiP8xzPJi0L9EwZX2/4h/0KePZi/m+VBiP7GO3gk=",
+      "hash": "sha256-efUCPxupkxFDw5aXbTtESS1GBJE/sTWWLiiNh+gJVcI=",
       "url": "manifest.webmanifest"
-    },
-    {
-      "hash": "sha256-paIeuWnSzjeLGITWkk4p3rcejUsZWCJGPeOK9UhWXtg=",
-      "url": "sample-data/weather.json"
     }
   ]
 };
