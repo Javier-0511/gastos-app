@@ -1,0 +1,361 @@
+@page "/mes"
+@using System.Globalization
+@using GastosApp.Client.Models
+@using GastosApp.Client.Services
+@inject AuthService Auth
+@inject AccountService Accounts
+@inject CategoryService CategorySvc
+@inject ExpenseService Expenses
+@inject NavigationManager Nav
+
+<PageTitle>Vista del mes</PageTitle>
+
+@if (isLoading)
+{
+    <p>Cargando...</p>
+}
+else if (accounts.Count == 0)
+{
+    <p>No tienes cuentas. <a href="setup">Configura tus cuentas</a>.</p>
+}
+else
+{
+    <div class="container-narrow">
+
+        @* Selector de mes *@
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <button class="btn btn-outline-secondary" @onclick="PreviousMonth">◀</button>
+            <h4 class="m-0 text-capitalize">@MonthLabel</h4>
+            <button class="btn btn-outline-secondary" @onclick="NextMonth">▶</button>
+        </div>
+
+        @* Total del mes (de la cuenta seleccionada) *@
+        <div class="text-center my-3">
+            <div class="text-muted small">Total del mes</div>
+            <div class="display-6 fw-bold">@FormatMoney(currentTotal)</div>
+        </div>
+
+        @* Pestañas de cuenta *@
+        <ul class="nav nav-tabs mb-3">
+            @foreach (var acc in accounts)
+            {
+                <li class="nav-item">
+                    <button class="nav-link @(selectedAccountId == acc.Id ? "active" : "")"
+                            @onclick="() => SelectAccount(acc.Id)">
+                        @acc.Name
+                    </button>
+                </li>
+            }
+        </ul>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        @* Bloques agrupados *@
+        @if (currentExpenses.Count == 0)
+        {
+            <p class="text-muted text-center my-4">No hay gastos en esta cuenta este mes.</p>
+        }
+        else
+        {
+            @foreach (var blockKey in BlocksForSelectedAccount())
+            {
+                var blockExpenses = currentExpenses
+                    .Where(e => CategoryOf(e.CategoryId)?.Block == blockKey)
+                    .ToList();
+
+                var blockTotal = blockExpenses.Sum(e => e.Amount);
+                var isExpanded = expandedBlocks.Contains(blockKey);
+
+                <div class="block-card mb-2">
+                    <button class="block-header" @onclick="() => ToggleBlock(blockKey)">
+                        <span class="block-arrow">@(isExpanded ? "▾" : "▸")</span>
+                        <span class="block-name">@BlockLabel(blockKey)</span>
+                        <span class="block-count text-muted">@blockExpenses.Count</span>
+                        <span class="block-total">@FormatMoney(blockTotal)</span>
+                    </button>
+
+                    @if (isExpanded)
+                    {
+                        @if (blockExpenses.Count == 0)
+                        {
+                            <div class="block-empty text-muted small">Sin gastos en este bloque.</div>
+                        }
+                        else
+                        {
+                            <ul class="list-unstyled mb-0">
+                                @foreach (var exp in blockExpenses.OrderByDescending(e => e.ExpenseDate))
+                                {
+                                    <li class="expense-row">
+                                        <div class="expense-main">
+                                            <div class="expense-title">
+                                                @(string.IsNullOrWhiteSpace(exp.Description)
+                                                    ? CategoryOf(exp.CategoryId)?.Name ?? "(sin categoría)"
+                                                    : exp.Description)
+                                            </div>
+                                            <div class="expense-meta text-muted small">
+                                                @exp.ExpenseDate.ToString("dd MMM", new CultureInfo("es-ES"))
+                                                · @(CategoryOf(exp.CategoryId)?.Name ?? "—")
+                                            </div>
+                                        </div>
+                                        <div class="expense-amount">@FormatMoney(exp.Amount)</div>
+                                        <div class="expense-actions">
+                                            <a class="btn btn-sm btn-outline-secondary"
+                                               href="@($"nuevo-gasto?id={exp.Id}")">
+                                                Editar
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                    @onclick="() => HandleDelete(exp)">
+                                                Borrar
+                                            </button>
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    }
+                </div>
+            }
+        }
+    </div>
+}
+
+<ConfirmModal @ref="confirmModal"
+              Title="Borrar gasto"
+              Message="Esta acción no se puede deshacer."
+              ConfirmText="Borrar"
+              ConfirmClass="btn-danger" />
+
+<style>
+    .container-narrow {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 16px;
+    }
+
+    .block-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+        background: white;
+    }
+
+    .block-header {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 24px 1fr auto auto;
+        gap: 8px;
+        align-items: center;
+        padding: 12px 14px;
+        background: #f8f9fa;
+        border: none;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .block-header:hover { background: #e9ecef; }
+
+    .block-arrow { color: #6c757d; font-size: 0.9rem; }
+    .block-name  { font-weight: 600; }
+    .block-count {
+        background: #dee2e6;
+        border-radius: 10px;
+        padding: 2px 8px;
+        font-size: 0.8rem;
+    }
+    .block-total { font-weight: 600; }
+
+    .block-empty { padding: 10px 14px; }
+
+    .expense-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        padding: 10px 14px;
+        border-top: 1px solid #f0f0f0;
+        align-items: center;
+    }
+
+    .expense-main { min-width: 0; }
+    .expense-title {
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .expense-meta { font-size: 0.8rem; }
+    .expense-amount { font-weight: 600; }
+
+    .expense-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 6px;
+        margin-top: 4px;
+    }
+</style>
+
+@code {
+    private bool isLoading = true;
+    private string errorMessage = "";
+
+    private List<Account> accounts = new();
+    private Dictionary<Guid, Category> categoryMap = new();
+    private List<Expense> currentExpenses = new();
+
+    private Guid selectedAccountId;
+    private int currentYear;
+    private int currentMonth;
+
+    // Bloques expandidos en la UI actual (vaciado al cambiar mes / cuenta).
+    private HashSet<string> expandedBlocks = new();
+
+    private ConfirmModal? confirmModal;
+
+    private static readonly string[] SharedBlocks = { "fijo", "comida", "variable", "minicompra" };
+    private static readonly string[] PersonalBlocks = { "individual" };
+
+    private string MonthLabel
+    {
+        get
+        {
+            var date = new DateTime(currentYear, currentMonth, 1);
+            return date.ToString("MMMM yyyy", new CultureInfo("es-ES"));
+        }
+    }
+
+    private decimal currentTotal => currentExpenses.Sum(e => e.Amount);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Auth.IsLoggedIn)
+        {
+            Nav.NavigateTo("login");
+            return;
+        }
+
+        var today = DateTime.Today;
+        currentYear = today.Year;
+        currentMonth = today.Month;
+
+        accounts = (await Accounts.GetMyAccountsAsync())
+            .OrderBy(a => a.IsShared)
+            .ToList();
+
+        if (accounts.Count == 0)
+        {
+            isLoading = false;
+            return;
+        }
+
+        selectedAccountId = accounts.First().Id;
+
+        // Cargamos las categorías de TODAS las cuentas del usuario una vez.
+        await LoadAllCategories();
+
+        // Y los gastos del mes actual.
+        await LoadExpenses();
+
+        isLoading = false;
+    }
+
+    private async Task LoadAllCategories()
+    {
+        categoryMap.Clear();
+        foreach (var acc in accounts)
+        {
+            var cats = await CategorySvc.GetByAccountAsync(acc.Id);
+            foreach (var c in cats)
+                categoryMap[c.Id] = c;
+        }
+    }
+
+    private async Task LoadExpenses()
+    {
+        try
+        {
+            errorMessage = "";
+            var all = await Expenses.GetByMonthAsync(currentYear, currentMonth);
+            currentExpenses = all
+                .Where(e => e.AccountId == selectedAccountId)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al cargar gastos: {ex.Message}";
+            currentExpenses = new();
+        }
+    }
+
+    private async Task SelectAccount(Guid accountId)
+    {
+        selectedAccountId = accountId;
+        expandedBlocks.Clear();
+        await LoadExpenses();
+    }
+
+    private async Task PreviousMonth()
+    {
+        var date = new DateTime(currentYear, currentMonth, 1).AddMonths(-1);
+        currentYear = date.Year;
+        currentMonth = date.Month;
+        expandedBlocks.Clear();
+        await LoadExpenses();
+    }
+
+    private async Task NextMonth()
+    {
+        var date = new DateTime(currentYear, currentMonth, 1).AddMonths(1);
+        currentYear = date.Year;
+        currentMonth = date.Month;
+        expandedBlocks.Clear();
+        await LoadExpenses();
+    }
+
+    private void ToggleBlock(string blockKey)
+    {
+        if (!expandedBlocks.Add(blockKey))
+            expandedBlocks.Remove(blockKey);
+    }
+
+    private Category? CategoryOf(Guid categoryId) =>
+        categoryMap.TryGetValue(categoryId, out var c) ? c : null;
+
+    private string[] BlocksForSelectedAccount()
+    {
+        var acc = accounts.FirstOrDefault(a => a.Id == selectedAccountId);
+        return acc?.IsShared == true ? SharedBlocks : PersonalBlocks;
+    }
+
+    private async Task HandleDelete(Expense exp)
+    {
+        if (confirmModal is null) return;
+
+        var confirmed = await confirmModal.ShowAsync();
+        if (!confirmed) return;
+
+        try
+        {
+            await Expenses.DeleteAsync(exp.Id);
+            await LoadExpenses();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"No se pudo borrar el gasto: {ex.Message}";
+        }
+    }
+
+    private static string FormatMoney(decimal amount) =>
+        amount.ToString("N2", new CultureInfo("es-ES")) + " €";
+
+    private static string BlockLabel(string block) => block switch
+    {
+        "fijo" => "Fijos",
+        "comida" => "Comida",
+        "variable" => "Variables",
+        "minicompra" => "Minicompras",
+        "individual" => "Individual",
+        _ => block
+    };
+}

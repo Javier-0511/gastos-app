@@ -62,16 +62,20 @@ La pantalla más importante. Pensada para móvil, una mano, 10 segundos.
 - [x] Feedback visual al guardar (toast verde "✓ Gasto guardado" 2s + reset formulario manteniendo cuenta).
 - [x] Enlace en NavMenu y botón CTA grande en Home.
 
-### 2.4 — Vista del mes [SIGUIENTE]
+### 2.4 — Vista del mes ✅ COMPLETADA
 
 Para revisar lo gastado y entender dónde se va el dinero.
 
-- [ ] Selector de mes (mes actual por defecto, flechas para anterior/siguiente).
-- [ ] Bloques de gastos comunes: fijos, comida, variables, minicompras (con totales).
-- [ ] Bloque de gastos individuales aparte.
-- [ ] Total del mes destacado.
-- [ ] Listado de gastos por bloque, expandible.
-- [ ] Cada gasto editable / eliminable.
+- [x] `ExpenseService` extendido: `GetByMonthAsync`, `GetByIdAsync`, `UpdateAsync`, `DeleteAsync`.
+- [x] Componente reutilizable `ConfirmModal.razor` (patrón `TaskCompletionSource`).
+- [x] Página `/mes` con selector de mes (flechas anterior/siguiente).
+- [x] Pestañas Personal / Compartida (consistencia con resto de pantallas).
+- [x] Total del mes destacado.
+- [x] Bloques en acordeón colapsado por defecto, con totales y nº de gastos.
+- [x] Cada gasto con descripción/categoría, fecha, importe y acciones (editar/borrar).
+- [x] Edición: reutiliza `/nuevo-gasto?id={guid}` (cero duplicación de formulario).
+- [x] Borrado con confirmación modal.
+- [x] Enlace en NavMenu y botón en Home.
 
 ### 2.5 — Previsión mensual y "resto disponible"
 

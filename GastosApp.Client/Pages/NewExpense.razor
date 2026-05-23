@@ -7,7 +7,7 @@
 @inject ExpenseService Expenses
 @inject NavigationManager Nav
 
-<PageTitle>Nuevo gasto</PageTitle>
+<PageTitle>@(IsEditMode ? "Editar gasto" : "Nuevo gasto")</PageTitle>
 
 @if (isLoading)
 {
@@ -20,7 +20,7 @@ else if (accounts.Count == 0)
 else
 {
     <div class="container-narrow">
-        <h2 class="mb-3">Nuevo gasto</h2>
+        <h2 class="mb-3">@(IsEditMode ? "Editar gasto" : "Nuevo gasto")</h2>
 
         @* Pestañas de cuenta *@
         <ul class="nav nav-tabs mb-4">
@@ -114,9 +114,16 @@ else
             }
             else
             {
-                <span>Guardar gasto</span>
+                <span>@(IsEditMode ? "Guardar cambios" : "Guardar gasto")</span>
             }
         </button>
+
+        @if (IsEditMode)
+        {
+            <button class="btn btn-outline-secondary w-100 mt-2" @onclick="HandleCancel">
+                Cancelar
+            </button>
+        }
     </div>
 }
 
@@ -166,6 +173,11 @@ else
 </style>
 
 @code {
+    [SupplyParameterFromQuery]
+    public Guid? Id { get; set; }
+
+    private bool IsEditMode => Id.HasValue && Id.Value != Guid.Empty;
+
     private bool isLoading = true;
     private bool isSaving = false;
     private bool toastVisible = false;
@@ -203,9 +215,46 @@ else
             return;
         }
 
-        selectedAccountId = accounts.First().Id;
-        await LoadCategories();
+        if (IsEditMode)
+        {
+            await LoadExpenseForEdit();
+        }
+        else
+        {
+            selectedAccountId = accounts.First().Id;
+            await LoadCategories();
+        }
+
         isLoading = false;
+    }
+
+    private async Task LoadExpenseForEdit()
+    {
+        try
+        {
+            var expense = await Expenses.GetByIdAsync(Id!.Value);
+            if (expense is null)
+            {
+                errorMessage = "Gasto no encontrado.";
+                selectedAccountId = accounts.First().Id;
+                await LoadCategories();
+                return;
+            }
+
+            selectedAccountId = expense.AccountId;
+            await LoadCategories();
+
+            selectedCategoryId = expense.CategoryId;
+            amount = expense.Amount;
+            description = expense.Description ?? "";
+            expenseDate = expense.ExpenseDate.Date;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al cargar el gasto: {ex.Message}";
+            selectedAccountId = accounts.First().Id;
+            await LoadCategories();
+        }
     }
 
     private async Task SelectAccount(Guid accountId)
@@ -240,15 +289,30 @@ else
 
         try
         {
-            await Expenses.CreateAsync(
-                selectedAccountId,
-                selectedCategoryId.Value,
-                description.Trim(),
-                amount.Value,
-                expenseDate);
+            if (IsEditMode)
+            {
+                await Expenses.UpdateAsync(
+                    Id!.Value,
+                    selectedAccountId,
+                    selectedCategoryId.Value,
+                    description.Trim(),
+                    amount.Value,
+                    expenseDate);
 
-            ResetForm();
-            await ShowToast();
+                Nav.NavigateTo("mes");
+            }
+            else
+            {
+                await Expenses.CreateAsync(
+                    selectedAccountId,
+                    selectedCategoryId.Value,
+                    description.Trim(),
+                    amount.Value,
+                    expenseDate);
+
+                ResetForm();
+                await ShowToast();
+            }
         }
         catch (Exception ex)
         {
@@ -259,6 +323,8 @@ else
             isSaving = false;
         }
     }
+
+    private void HandleCancel() => Nav.NavigateTo("mes");
 
     private void ResetForm()
     {

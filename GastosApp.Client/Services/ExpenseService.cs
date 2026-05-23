@@ -1,4 +1,5 @@
 using GastosApp.Client.Models;
+using Supabase.Postgrest;
 
 namespace GastosApp.Client.Services;
 
@@ -36,5 +37,65 @@ public class ExpenseService
 
         var response = await _supabase.Client.From<Expense>().Insert(newExpense);
         return response.Models.First();
+    }
+
+    public async Task<Expense?> GetByIdAsync(Guid id)
+    {
+        var response = await _supabase.Client
+            .From<Expense>()
+            .Where(e => e.Id == id)
+            .Single();
+
+        return response;
+    }
+
+    public async Task<List<Expense>> GetByMonthAsync(int year, int month)
+    {
+        // Rango [primer día del mes, primer día del mes siguiente).
+        // Postgres compara `date` con literales tipo 'YYYY-MM-DD'.
+        var from = new DateTime(year, month, 1);
+        var to = from.AddMonths(1);
+
+        var response = await _supabase.Client
+            .From<Expense>()
+            .Where(e => e.ExpenseDate >= from && e.ExpenseDate < to)
+            .Order(e => e.ExpenseDate, Constants.Ordering.Descending)
+            .Get();
+
+        return response.Models;
+    }
+
+    public async Task<Expense> UpdateAsync(
+        Guid id,
+        Guid accountId,
+        Guid categoryId,
+        string description,
+        decimal amount,
+        DateTime expenseDate)
+    {
+        var existing = await _supabase.Client
+            .From<Expense>()
+            .Where(e => e.Id == id)
+            .Single();
+
+        if (existing is null)
+            throw new InvalidOperationException("Gasto no encontrado.");
+
+        existing.AccountId = accountId;
+        existing.CategoryId = categoryId;
+        existing.Description = description;
+        existing.Amount = amount;
+        existing.ExpenseDate = expenseDate.Date;
+
+        var response = await existing.Update<Expense>();
+        return response.Models.First();
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        await _supabase.Client
+            .From<Expense>()
+            .Where(e => e.Id == id)
+            .Delete();
     }
 }
