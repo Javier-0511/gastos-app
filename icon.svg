@@ -5,13 +5,29 @@
             <stop offset="0%" stop-color="#1a1d20"/>
             <stop offset="100%" stop-color="#1e1b4b"/>
         </linearGradient>
+        <linearGradient id="bar" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#a5b4fc"/>
+            <stop offset="100%" stop-color="#6366f1"/>
+        </linearGradient>
     </defs>
+
+    <!-- fondo -->
     <rect width="512" height="512" rx="96" fill="url(#bg)"/>
-    <text x="256" y="256"
-          font-family="Helvetica, Arial, sans-serif"
-          font-size="320"
-          font-weight="700"
-          fill="#6366f1"
-          text-anchor="middle"
-          dominant-baseline="central">G</text>
+
+    <!-- barras ascendentes -->
+    <rect x="112" y="312" width="72" height="120" rx="14" fill="url(#bar)" opacity="0.55"/>
+    <rect x="220" y="232" width="72" height="200" rx="14" fill="url(#bar)" opacity="0.78"/>
+    <rect x="328" y="152" width="72" height="280" rx="14" fill="url(#bar)"/>
+
+    <!-- línea conectando los topes (sutil) -->
+    <polyline points="148,312 256,232 364,152"
+              fill="none"
+              stroke="#ffffff"
+              stroke-width="6"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              opacity="0.6"/>
+
+    <!-- punto en el tope de la última barra -->
+    <circle cx="364" cy="152" r="12" fill="#ffffff"/>
 </svg>
