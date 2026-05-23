@@ -33,7 +33,21 @@ Tras el primer login, el usuario no tiene cuentas creadas. Flow para crearlas.
 - [x] Al confirmar: crear ambas cuentas y añadir al usuario como miembro (`share_percent` 100 personal / 50 compartida).
 - [ ] ~~Crear categorías por defecto~~ → **Pospuesto**: se gestionarán desde su propia pantalla (2.4) o al añadir el primer gasto.
 
-### 2.2 — Añadir gasto rápido [SIGUIENTE]
+### 2.2 — Gestión de categorías ✅ COMPLETADA
+
+> Reordenado: originalmente era 2.4, pero se necesita antes de poder añadir gastos
+> (un gasto requiere `category_id`, y decidimos no crear categorías por defecto en setup).
+
+- [x] RLS policies de `categories` en Supabase (INSERT/SELECT/UPDATE/DELETE).
+- [x] Modelo `Category.cs` y servicio `CategoryService.cs` (CRUD).
+- [x] Página `/categorias` con pestañas por cuenta (personal / compartida).
+- [x] Crear nueva categoría (nombre + bloque). Bloque restringido según tipo de cuenta.
+- [x] Editar / eliminar (formulario inline reutilizado).
+- [x] Mensaje de error específico si no se puede borrar por gastos asociados (guard preparado, se probará en 2.3).
+- [x] Enlace en `NavMenu`.
+- [ ] ~~Color / icono~~ → **Pospuesto** a Fase 3 (pulido visual). Columnas a `null` por ahora.
+
+### 2.3 — Añadir gasto rápido [SIGUIENTE]
 
 La pantalla más importante. Pensada para móvil, una mano, 10 segundos.
 
@@ -45,7 +59,7 @@ La pantalla más importante. Pensada para móvil, una mano, 10 segundos.
 - [ ] Botón guardar grande.
 - [ ] Feedback visual al guardar (toast / animación).
 
-### 2.3 — Vista del mes
+### 2.4 — Vista del mes
 
 Para revisar lo gastado y entender dónde se va el dinero.
 
@@ -55,13 +69,6 @@ Para revisar lo gastado y entender dónde se va el dinero.
 - [ ] Total del mes destacado.
 - [ ] Listado de gastos por bloque, expandible.
 - [ ] Cada gasto editable / eliminable.
-
-### 2.4 — Gestión de categorías
-
-- [ ] Listado de categorías por cuenta.
-- [ ] Crear nueva categoría (nombre, bloque, color, icono).
-- [ ] Editar / eliminar.
-- [ ] Validar que no se borren categorías con gastos asociados (o decidir comportamiento).
 
 ### 2.5 — Previsión mensual y "resto disponible"
 
@@ -133,6 +140,16 @@ Equivalente al H15/H16 del Excel.
 ---
 
 ## Cambios y notas posteriores
+
+### 2026-05-23 — Reorden 2.2 ↔ 2.4: categorías antes que gastos
+
+Al planificar la pantalla de añadir gasto rápido (original 2.2) caímos en que un `expense` requiere `category_id`, y en 2.1 decidimos NO crear categorías por defecto en el setup. Sin categorías no se puede crear ningún gasto. Tres opciones discutidas:
+
+1. Crear categorías al vuelo desde la propia pantalla de añadir gasto.
+2. Adelantar 2.4 (gestión de categorías) antes que 2.2.
+3. Sembrar categorías mínimas en setup (reabrir decisión de 2.1).
+
+Elegida **opción 2**: separación clara de responsabilidades, la pantalla de "añadir gasto" queda enfocada en su único trabajo, y la gestión de categorías ya estaba en el roadmap igualmente. La numeración 2.2/2.3/2.4 se ha reordenado en consecuencia.
 
 ### 2026-05-23 — Cierre Fase 2.1 + lección sobre RLS y `RETURNING`
 

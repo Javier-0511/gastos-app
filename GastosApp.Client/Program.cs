@@ -13,6 +13,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 builder.Services.AddSingleton<SupabaseService>();
 builder.Services.AddSingleton<AuthService>();
 builder.Services.AddSingleton<AccountService>();
+builder.Services.AddSingleton<CategoryService>();
 var host = builder.Build();
 
 // Inicializamos la conexión de Supabase antes de arrancar

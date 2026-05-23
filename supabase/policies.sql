@@ -51,3 +51,71 @@ ON public.account_members
 FOR SELECT
 TO authenticated
 USING (user_id = auth.uid());
+
+-- =====================================================
+-- categories
+-- =====================================================
+-- Reglas: un usuario solo puede ver/crear/editar/borrar categorías
+-- de cuentas en las que es miembro (vía account_members).
+-- Igual que en accounts, la USING de SELECT se aplica también durante
+-- INSERT ... RETURNING (Prefer: return=representation del cliente .NET),
+-- así que aquí basta con la membresía: la categoría se crea para una
+-- cuenta donde el usuario YA es miembro, no hay chicken-and-egg.
+
+-- INSERT
+DROP POLICY IF EXISTS "Users can create categories in their accounts" ON public.categories;
+CREATE POLICY "Users can create categories in their accounts"
+ON public.categories
+FOR INSERT
+TO authenticated
+WITH CHECK (
+    account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+);
+
+-- SELECT
+DROP POLICY IF EXISTS "Users can view categories of their accounts" ON public.categories;
+CREATE POLICY "Users can view categories of their accounts"
+ON public.categories
+FOR SELECT
+TO authenticated
+USING (
+    account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+);
+
+-- UPDATE
+DROP POLICY IF EXISTS "Users can update categories of their accounts" ON public.categories;
+CREATE POLICY "Users can update categories of their accounts"
+ON public.categories
+FOR UPDATE
+TO authenticated
+USING (
+    account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+)
+WITH CHECK (
+    account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+);
+
+-- DELETE
+DROP POLICY IF EXISTS "Users can delete categories of their accounts" ON public.categories;
+CREATE POLICY "Users can delete categories of their accounts"
+ON public.categories
+FOR DELETE
+TO authenticated
+USING (
+    account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+);

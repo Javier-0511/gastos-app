@@ -1,0 +1,275 @@
+@page "/categorias"
+@using GastosApp.Client.Models
+@using GastosApp.Client.Services
+@inject AuthService Auth
+@inject AccountService Accounts
+@inject CategoryService CategorySvc
+@inject NavigationManager Nav
+
+<PageTitle>Categorías</PageTitle>
+
+@if (isLoading)
+{
+    <p>Cargando...</p>
+}
+else if (accounts.Count == 0)
+{
+    <p>No tienes cuentas todavía. <a href="setup">Configura tus cuentas</a>.</p>
+}
+else
+{
+    <h2>Categorías</h2>
+
+    <ul class="nav nav-tabs mb-3">
+        @foreach (var acc in accounts)
+        {
+            <li class="nav-item">
+                <button class="nav-link @(selectedAccountId == acc.Id ? "active" : "")"
+                        @onclick="() => SelectAccount(acc.Id)">
+                    @acc.Name
+                </button>
+            </li>
+        }
+    </ul>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    @* Formulario inline para crear / editar *@
+    @if (showForm)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">@(editingId.HasValue ? "Editar categoría" : "Nueva categoría")</h5>
+
+                <div class="mb-2">
+                    <label class="form-label">Nombre</label>
+                    <input class="form-control" @bind="formName" @bind:event="oninput" />
+                </div>
+
+                <div class="mb-2">
+                    <label class="form-label">Bloque</label>
+                    <select class="form-select" @bind="formBlock">
+                        @foreach (var b in BlocksFor(selectedAccountId))
+                        {
+                            <option value="@b">@BlockLabel(b)</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" @onclick="HandleSave"
+                            disabled="@(isSaving || string.IsNullOrWhiteSpace(formName))">
+                        @(isSaving ? "Guardando..." : "Guardar")
+                    </button>
+                    <button class="btn btn-outline-secondary" @onclick="CancelForm" disabled="@isSaving">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <button class="btn btn-primary mb-3" @onclick="StartNew">
+            + Nueva categoría
+        </button>
+    }
+
+    @* Listado agrupado por bloque *@
+    @if (currentCategories.Count == 0)
+    {
+        <p class="text-muted">Aún no hay categorías en esta cuenta.</p>
+    }
+    else
+    {
+        @foreach (var group in currentCategories.GroupBy(c => c.Block).OrderBy(g => BlockOrder(g.Key)))
+        {
+            <h6 class="text-uppercase text-muted mt-3">@BlockLabel(group.Key)</h6>
+            <ul class="list-group mb-2">
+                @foreach (var cat in group.OrderBy(c => c.Name))
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>@cat.Name</span>
+                        <span>
+                            <button class="btn btn-sm btn-outline-secondary me-2"
+                                    @onclick="() => StartEdit(cat)">
+                                Editar
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    @onclick="() => HandleDelete(cat)">
+                                Borrar
+                            </button>
+                        </span>
+                    </li>
+                }
+            </ul>
+        }
+    }
+}
+
+@code {
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private string errorMessage = "";
+
+    private List<Account> accounts = new();
+    private Guid selectedAccountId;
+    private List<Category> currentCategories = new();
+
+    // Form state
+    private bool showForm = false;
+    private Guid? editingId = null;
+    private string formName = "";
+    private string formBlock = "";
+
+    // Bloques válidos según el tipo de cuenta.
+    // En cuenta compartida: fijo, comida, variable, minicompra.
+    // En cuenta personal: individual.
+    // El CHECK de la BBDD valida igualmente, esto solo restringe la UI.
+    private static readonly string[] SharedBlocks = { "fijo", "comida", "variable", "minicompra" };
+    private static readonly string[] PersonalBlocks = { "individual" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Auth.IsLoggedIn)
+        {
+            Nav.NavigateTo("login");
+            return;
+        }
+
+        accounts = await Accounts.GetMyAccountsAsync();
+        if (accounts.Count == 0)
+        {
+            isLoading = false;
+            return;
+        }
+
+        // Ordenamos: personal primero, compartida después
+        accounts = accounts.OrderBy(a => a.IsShared).ToList();
+        selectedAccountId = accounts.First().Id;
+        await LoadCategories();
+        isLoading = false;
+    }
+
+    private async Task SelectAccount(Guid accountId)
+    {
+        selectedAccountId = accountId;
+        CancelForm();
+        await LoadCategories();
+    }
+
+    private async Task LoadCategories()
+    {
+        try
+        {
+            currentCategories = await CategorySvc.GetByAccountAsync(selectedAccountId);
+            errorMessage = "";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al cargar categorías: {ex.Message}";
+        }
+    }
+
+    private void StartNew()
+    {
+        editingId = null;
+        formName = "";
+        formBlock = BlocksFor(selectedAccountId).First();
+        showForm = true;
+        errorMessage = "";
+    }
+
+    private void StartEdit(Category cat)
+    {
+        editingId = cat.Id;
+        formName = cat.Name;
+        formBlock = cat.Block;
+        showForm = true;
+        errorMessage = "";
+    }
+
+    private void CancelForm()
+    {
+        showForm = false;
+        editingId = null;
+        formName = "";
+        formBlock = "";
+    }
+
+    private async Task HandleSave()
+    {
+        if (string.IsNullOrWhiteSpace(formName)) return;
+
+        isSaving = true;
+        errorMessage = "";
+
+        try
+        {
+            if (editingId.HasValue)
+            {
+                await CategorySvc.UpdateAsync(editingId.Value, formName.Trim(), formBlock);
+            }
+            else
+            {
+                await CategorySvc.CreateAsync(selectedAccountId, formName.Trim(), formBlock);
+            }
+
+            CancelForm();
+            await LoadCategories();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al guardar: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task HandleDelete(Category cat)
+    {
+        errorMessage = "";
+        try
+        {
+            await CategorySvc.DeleteAsync(cat.Id);
+            await LoadCategories();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"No se pudo borrar \"{cat.Name}\". " +
+                "Si tiene gastos asociados, primero hay que reasignarlos o borrarlos. " +
+                $"Detalle: {ex.Message}";
+        }
+    }
+
+    private string[] BlocksFor(Guid accountId)
+    {
+        var acc = accounts.FirstOrDefault(a => a.Id == accountId);
+        return acc?.IsShared == true ? SharedBlocks : PersonalBlocks;
+    }
+
+    private static string BlockLabel(string block) => block switch
+    {
+        "fijo" => "Fijos",
+        "comida" => "Comida",
+        "variable" => "Variables",
+        "minicompra" => "Minicompras",
+        "individual" => "Individual",
+        _ => block
+    };
+
+    private static int BlockOrder(string block) => block switch
+    {
+        "fijo" => 1,
+        "comida" => 2,
+        "variable" => 3,
+        "minicompra" => 4,
+        "individual" => 5,
+        _ => 99
+    };
+}
