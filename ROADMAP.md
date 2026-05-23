@@ -47,19 +47,22 @@ Tras el primer login, el usuario no tiene cuentas creadas. Flow para crearlas.
 - [x] Enlace en `NavMenu`.
 - [ ] ~~Color / icono~~ → **Pospuesto** a Fase 3 (pulido visual). Columnas a `null` por ahora.
 
-### 2.3 — Añadir gasto rápido [SIGUIENTE]
+### 2.3 — Añadir gasto rápido ✅ COMPLETADA
 
 La pantalla más importante. Pensada para móvil, una mano, 10 segundos.
 
-- [ ] Selector de cuenta (personal / compartida).
-- [ ] Importe (input numérico grande, con teclado numérico en móvil).
-- [ ] Descripción (texto corto).
-- [ ] Selector de categoría (chips horizontales con las más usadas).
-- [ ] Fecha (default hoy).
-- [ ] Botón guardar grande.
-- [ ] Feedback visual al guardar (toast / animación).
+- [x] RLS policies de `expenses` en Supabase (con `paid_by = auth.uid()` en INSERT).
+- [x] Modelo `Expense.cs` y `ExpenseService.cs` (solo `CreateAsync` por ahora).
+- [x] Página `/nuevo-gasto` con pestañas de cuenta y formulario móvil-first.
+- [x] Importe (input grande con `inputmode="decimal"` para teclado numérico en móvil).
+- [x] Descripción opcional (texto corto).
+- [x] Selector de categoría (chips horizontales).
+- [x] Fecha (default hoy).
+- [x] Botón guardar grande con validación (importe + categoría).
+- [x] Feedback visual al guardar (toast verde "✓ Gasto guardado" 2s + reset formulario manteniendo cuenta).
+- [x] Enlace en NavMenu y botón CTA grande en Home.
 
-### 2.4 — Vista del mes
+### 2.4 — Vista del mes [SIGUIENTE]
 
 Para revisar lo gastado y entender dónde se va el dinero.
 

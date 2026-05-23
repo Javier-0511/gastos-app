@@ -1,0 +1,279 @@
+@page "/nuevo-gasto"
+@using GastosApp.Client.Models
+@using GastosApp.Client.Services
+@inject AuthService Auth
+@inject AccountService Accounts
+@inject CategoryService CategorySvc
+@inject ExpenseService Expenses
+@inject NavigationManager Nav
+
+<PageTitle>Nuevo gasto</PageTitle>
+
+@if (isLoading)
+{
+    <p>Cargando...</p>
+}
+else if (accounts.Count == 0)
+{
+    <p>No tienes cuentas. <a href="setup">Configura tus cuentas</a>.</p>
+}
+else
+{
+    <div class="container-narrow">
+        <h2 class="mb-3">Nuevo gasto</h2>
+
+        @* Pestañas de cuenta *@
+        <ul class="nav nav-tabs mb-4">
+            @foreach (var acc in accounts)
+            {
+                <li class="nav-item">
+                    <button class="nav-link @(selectedAccountId == acc.Id ? "active" : "")"
+                            @onclick="() => SelectAccount(acc.Id)">
+                        @acc.Name
+                    </button>
+                </li>
+            }
+        </ul>
+
+        @if (toastVisible)
+        {
+            <div class="alert alert-success text-center fw-bold" role="alert">
+                ✓ Gasto guardado
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        @* Importe — input grande, teclado numérico en móvil *@
+        <div class="mb-4 text-center">
+            <div class="input-group input-group-lg justify-content-center amount-group">
+                <input type="number"
+                       inputmode="decimal"
+                       step="0.01"
+                       min="0"
+                       class="form-control form-control-lg amount-input"
+                       placeholder="0,00"
+                       @bind="amount"
+                       @bind:event="oninput" />
+                <span class="input-group-text">€</span>
+            </div>
+        </div>
+
+        @* Descripción *@
+        <div class="mb-3">
+            <label class="form-label">Descripción <span class="text-muted small">(opcional)</span></label>
+            <input type="text"
+                   class="form-control"
+                   maxlength="100"
+                   placeholder="Ej: super del jueves"
+                   @bind="description"
+                   @bind:event="oninput" />
+        </div>
+
+        @* Categoría — chips horizontales *@
+        <div class="mb-3">
+            <label class="form-label">Categoría</label>
+            @if (categories.Count == 0)
+            {
+                <div class="alert alert-warning small mb-0">
+                    No hay categorías en esta cuenta.
+                    <a href="categorias">Crear categorías</a>.
+                </div>
+            }
+            else
+            {
+                <div class="chips-row">
+                    @foreach (var cat in categories)
+                    {
+                        <button type="button"
+                                class="chip @(selectedCategoryId == cat.Id ? "chip-selected" : "")"
+                                @onclick="() => selectedCategoryId = cat.Id">
+                            @cat.Name
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+
+        @* Fecha *@
+        <div class="mb-4">
+            <label class="form-label">Fecha</label>
+            <input type="date" class="form-control" @bind="expenseDate" />
+        </div>
+
+        @* Botón guardar *@
+        <button class="btn btn-primary btn-lg w-100"
+                @onclick="HandleSave"
+                disabled="@(isSaving || !IsValid)">
+            @if (isSaving)
+            {
+                <span>Guardando...</span>
+            }
+            else
+            {
+                <span>Guardar gasto</span>
+            }
+        </button>
+    </div>
+}
+
+<style>
+    .container-narrow {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 16px;
+    }
+
+    .amount-group {
+        max-width: 280px;
+        margin: 0 auto;
+    }
+
+    .amount-input {
+        font-size: 2.5rem;
+        text-align: right;
+        font-weight: 600;
+    }
+
+    .chips-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .chip {
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1.5px solid #ced4da;
+        background: white;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .chip:hover {
+        border-color: #0d6efd;
+    }
+
+    .chip-selected {
+        background: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+    }
+</style>
+
+@code {
+    private bool isLoading = true;
+    private bool isSaving = false;
+    private bool toastVisible = false;
+    private string errorMessage = "";
+
+    private List<Account> accounts = new();
+    private List<Category> categories = new();
+
+    private Guid selectedAccountId;
+    private Guid? selectedCategoryId;
+    private decimal? amount;
+    private string description = "";
+    private DateTime expenseDate = DateTime.Today;
+
+    private bool IsValid =>
+        selectedAccountId != Guid.Empty
+        && selectedCategoryId.HasValue
+        && amount is > 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Auth.IsLoggedIn)
+        {
+            Nav.NavigateTo("login");
+            return;
+        }
+
+        accounts = (await Accounts.GetMyAccountsAsync())
+            .OrderBy(a => a.IsShared)
+            .ToList();
+
+        if (accounts.Count == 0)
+        {
+            isLoading = false;
+            return;
+        }
+
+        selectedAccountId = accounts.First().Id;
+        await LoadCategories();
+        isLoading = false;
+    }
+
+    private async Task SelectAccount(Guid accountId)
+    {
+        selectedAccountId = accountId;
+        selectedCategoryId = null;
+        await LoadCategories();
+    }
+
+    private async Task LoadCategories()
+    {
+        try
+        {
+            categories = (await CategorySvc.GetByAccountAsync(selectedAccountId))
+                .OrderBy(c => c.Name)
+                .ToList();
+            errorMessage = "";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al cargar categorías: {ex.Message}";
+        }
+    }
+
+    private async Task HandleSave()
+    {
+        if (!IsValid || amount is null || selectedCategoryId is null) return;
+
+        isSaving = true;
+        errorMessage = "";
+        toastVisible = false;
+
+        try
+        {
+            await Expenses.CreateAsync(
+                selectedAccountId,
+                selectedCategoryId.Value,
+                description.Trim(),
+                amount.Value,
+                expenseDate);
+
+            ResetForm();
+            await ShowToast();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al guardar el gasto: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void ResetForm()
+    {
+        amount = null;
+        description = "";
+        selectedCategoryId = null;
+        expenseDate = DateTime.Today;
+    }
+
+    private async Task ShowToast()
+    {
+        toastVisible = true;
+        StateHasChanged();
+        await Task.Delay(2000);
+        toastVisible = false;
+        StateHasChanged();
+    }
+}

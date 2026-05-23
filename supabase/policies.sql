@@ -119,3 +119,70 @@ USING (
         WHERE user_id = auth.uid()
     )
 );
+
+-- =====================================================
+-- expenses
+-- =====================================================
+-- Reglas: ver/crear/editar/borrar gastos solo en cuentas donde soy miembro.
+-- Además, en INSERT exigimos que `paid_by = auth.uid()` para que un usuario
+-- no pueda marcar a otro miembro como pagador. Cuando entre Marta y queramos
+-- soportar "registrar un gasto pagado por el otro" habrá que relajar esto.
+
+-- INSERT
+DROP POLICY IF EXISTS "Users can create expenses in their accounts" ON public.expenses;
+CREATE POLICY "Users can create expenses in their accounts"
+ON public.expenses
+FOR INSERT
+TO authenticated
+WITH CHECK (
+    paid_by = auth.uid()
+    AND account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+);
+
+-- SELECT
+DROP POLICY IF EXISTS "Users can view expenses of their accounts" ON public.expenses;
+CREATE POLICY "Users can view expenses of their accounts"
+ON public.expenses
+FOR SELECT
+TO authenticated
+USING (
+    account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+);
+
+-- UPDATE
+DROP POLICY IF EXISTS "Users can update expenses of their accounts" ON public.expenses;
+CREATE POLICY "Users can update expenses of their accounts"
+ON public.expenses
+FOR UPDATE
+TO authenticated
+USING (
+    account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+)
+WITH CHECK (
+    account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+);
+
+-- DELETE
+DROP POLICY IF EXISTS "Users can delete expenses of their accounts" ON public.expenses;
+CREATE POLICY "Users can delete expenses of their accounts"
+ON public.expenses
+FOR DELETE
+TO authenticated
+USING (
+    account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+);

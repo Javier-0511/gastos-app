@@ -15,7 +15,16 @@ else
     <h1>¡Hola, @Auth.CurrentUser?.Email!</h1>
     <p>Estás dentro de tu app de gastos.</p>
 
-    <button class="btn btn-outline-secondary" @onclick="HandleLogout">
+    <div class="d-grid gap-2 my-4" style="max-width: 400px;">
+        <a href="nuevo-gasto" class="btn btn-primary btn-lg">
+            + Añadir gasto
+        </a>
+        <a href="categorias" class="btn btn-outline-secondary">
+            Gestionar categorías
+        </a>
+    </div>
+
+    <button class="btn btn-outline-secondary btn-sm" @onclick="HandleLogout">
         Cerrar sesión
     </button>
 }
