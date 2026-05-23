@@ -186,3 +186,67 @@ USING (
         WHERE user_id = auth.uid()
     )
 );
+
+-- =====================================================
+-- monthly_budgets
+-- =====================================================
+-- Reglas: ver/crear/editar/borrar previsiones solo en cuentas donde soy miembro.
+-- Mismo patrón que categories y expenses.
+
+-- INSERT
+DROP POLICY IF EXISTS "Users can create budgets in their accounts" ON public.monthly_budgets;
+CREATE POLICY "Users can create budgets in their accounts"
+ON public.monthly_budgets
+FOR INSERT
+TO authenticated
+WITH CHECK (
+    account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+);
+
+-- SELECT
+DROP POLICY IF EXISTS "Users can view budgets of their accounts" ON public.monthly_budgets;
+CREATE POLICY "Users can view budgets of their accounts"
+ON public.monthly_budgets
+FOR SELECT
+TO authenticated
+USING (
+    account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+);
+
+-- UPDATE
+DROP POLICY IF EXISTS "Users can update budgets of their accounts" ON public.monthly_budgets;
+CREATE POLICY "Users can update budgets of their accounts"
+ON public.monthly_budgets
+FOR UPDATE
+TO authenticated
+USING (
+    account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+)
+WITH CHECK (
+    account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+);
+
+-- DELETE
+DROP POLICY IF EXISTS "Users can delete budgets of their accounts" ON public.monthly_budgets;
+CREATE POLICY "Users can delete budgets of their accounts"
+ON public.monthly_budgets
+FOR DELETE
+TO authenticated
+USING (
+    account_id IN (
+        SELECT account_id FROM public.account_members
+        WHERE user_id = auth.uid()
+    )
+);

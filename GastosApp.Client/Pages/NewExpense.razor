@@ -176,6 +176,9 @@ else
     [SupplyParameterFromQuery]
     public Guid? Id { get; set; }
 
+    [SupplyParameterFromQuery(Name = "accountId")]
+    public Guid? PreselectedAccountId { get; set; }
+
     private bool IsEditMode => Id.HasValue && Id.Value != Guid.Empty;
 
     private bool isLoading = true;
@@ -221,7 +224,12 @@ else
         }
         else
         {
-            selectedAccountId = accounts.First().Id;
+            // Si la URL trae ?accountId={guid} y existe entre mis cuentas, lo usamos
+            // como preselección. Si no, primera cuenta (personal) por defecto.
+            var preselected = PreselectedAccountId.HasValue
+                ? accounts.FirstOrDefault(a => a.Id == PreselectedAccountId.Value)
+                : null;
+            selectedAccountId = preselected?.Id ?? accounts.First().Id;
             await LoadCategories();
         }
 

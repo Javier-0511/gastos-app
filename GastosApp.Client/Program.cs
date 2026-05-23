@@ -15,6 +15,7 @@ builder.Services.AddSingleton<AuthService>();
 builder.Services.AddSingleton<AccountService>();
 builder.Services.AddSingleton<CategoryService>();
 builder.Services.AddSingleton<ExpenseService>();
+builder.Services.AddSingleton<BudgetService>();
 var host = builder.Build();
 
 // Inicializamos la conexión de Supabase antes de arrancar

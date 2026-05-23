@@ -77,13 +77,17 @@ Para revisar lo gastado y entender dónde se va el dinero.
 - [x] Borrado con confirmación modal.
 - [x] Enlace en NavMenu y botón en Home.
 
-### 2.5 — Previsión mensual y "resto disponible"
+### 2.5 — Previsión mensual y "resto disponible" ✅ COMPLETADA
 
 Equivalente al H15/H16 del Excel.
 
-- [ ] Definir previsión por mes y cuenta (formulario simple).
-- [ ] Mostrar en la vista del mes: previsión, gastado, resto disponible.
-- [ ] Indicador visual cuando resto es bajo / negativo.
+- [x] RLS policies de `monthly_budgets` en Supabase.
+- [x] Modelo `MonthlyBudget.cs` y `BudgetService.cs` con `GetForMonthAsync` y `UpsertAsync`.
+- [x] Bloque de previsión integrado en `/mes`: previsión / gastado / resto + barra de progreso semáforo (verde <80%, ámbar 80-99%, rojo ≥100%).
+- [x] Modal de edición inline reutilizando estilos de `ConfirmModal`.
+- [x] Resto en rojo cuando es negativo.
+- [x] Bonus: botón "+ Añadir gasto" en `/mes` que preselecciona la cuenta activa (`/nuevo-gasto?accountId={guid}`).
+- [ ] ~~Saldo bancario acumulativo~~ → **Pospuesto**. Discutido: distinguir "cuánto me sobra este mes" (flujo de caja) de "cuánto hay en el banco" (saldo acumulado). El segundo requiere registro exhaustivo y suele descuadrar con el banco real. Volveremos cuando esté más claro qué se necesita.
 
 ### 2.6 — Importar histórico del Excel
 
@@ -147,6 +151,18 @@ Equivalente al H15/H16 del Excel.
 ---
 
 ## Cambios y notas posteriores
+
+### 2026-05-23 — Saldo bancario acumulativo pospuesto
+
+Al implementar 2.5 surgió la idea de añadir un saldo acumulado de la cuenta del banco (lo sobrante de un mes pasa al siguiente, como en el Excel). Al detallar el modelo aparecieron tres opciones:
+
+1. **MVP simple**: solo "ingresos del mes" por cuenta-mes, sin acumulado entre meses. Responde a "¿cuánto me sobra este mes?".
+2. **Saldo acumulado completo**: ingresos + saldo inicial editable + saldo final que arrastra al siguiente mes.
+3. **Posponer**.
+
+Conversación útil: hay dos preguntas conceptualmente distintas que se confunden — "cuánto me sobra de la nómina este mes" (flujo de caja) vs "cuánto hay AHORA mismo en el banco" (saldo acumulado). La segunda requiere registro exhaustivo y suele descuadrar con la realidad del banco por movimientos atípicos.
+
+Decisión: **posponer hasta que esté más claro qué se necesita**. La idea original de Javi era que la nómina alimenta la personal y el aporte a la compartida = previsión × share_percent — modelo correcto pero asume que el aporte real coincide con la previsión, lo cual no siempre es así. Cuando volvamos a esto, partir de la opción simple antes que de la grande.
 
 ### 2026-05-23 — Reorden 2.2 ↔ 2.4: categorías antes que gastos
 
