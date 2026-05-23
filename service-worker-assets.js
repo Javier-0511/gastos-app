@@ -1,13 +1,17 @@
 self.assetsManifest = {
-  "version": "ZE6BdDLu",
+  "version": "JHpgPg1s",
   "assets": [
     {
       "hash": "sha256-cVuPjK0xM/tnm1/mYrfg8SOuiCDlDWJnXEAJfrSjovs=",
       "url": "GastosApp.Client.styles.css"
     },
     {
-      "hash": "sha256-QG5Mp8nqufRTqR8NONyloaEU9vJWnqQa36ra6QeDM7Y=",
-      "url": "_framework/GastosApp.Client.w4xmlmlukj.wasm"
+      "hash": "sha256-MoHtNP0GJRxJ1r+JRZXafioOiqWixdBC2YEwcjTjtkg=",
+      "url": "_framework/GastosApp.Client.m7u55xpix4.wasm"
+    },
+    {
+      "hash": "sha256-43wue8+R19mzK5HDDipAOuFwh6M3aVBJeUukI1g++7g=",
+      "url": "_framework/Microsoft.AspNetCore.Components.9dcmvf80jn.wasm"
     },
     {
       "hash": "sha256-AQWmpBy6tfzhOsIAPCxM5VvH4/rXz4o4x9FuiUyJ/eY=",
@@ -16,10 +20,6 @@ self.assetsManifest = {
     {
       "hash": "sha256-eOd81QYenPN7JHUGDzUVpOiPivr7MmrnXD6tiEDeNp0=",
       "url": "_framework/Microsoft.AspNetCore.Components.WebAssembly.s3zvse5hm4.wasm"
-    },
-    {
-      "hash": "sha256-k8zvDbqwQr5o7NIZjGPT1oD9lhFqXSWStniHf58LmF4=",
-      "url": "_framework/Microsoft.AspNetCore.Components.nvqaq7h9ba.wasm"
     },
     {
       "hash": "sha256-wZJRhndrqNa/k0qyuwqLV09INhv6F9TU/skkCshYilc=",
@@ -362,8 +362,8 @@ self.assetsManifest = {
       "url": "_framework/blazor.webassembly.958z1vx7fr.js"
     },
     {
-      "hash": "sha256-AhsKkgVnCpBLAfEj1aIhkPCgc+8Fm4xM4ZklfYmnZyk=",
-      "url": "_framework/dotnet.iodfgmo642.js"
+      "hash": "sha256-J4gyj1vRe0dzGSGu8PcytzWPGDcWVV/ltWgqLe1TfEo=",
+      "url": "_framework/dotnet.brtmo89iin.js"
     },
     {
       "hash": "sha256-i4MH1ttKidpkFY/9i4kRe+7ux5JQMZds+qXuSkJqeog=",
@@ -414,7 +414,7 @@ self.assetsManifest = {
       "url": "icon-512.png"
     },
     {
-      "hash": "sha256-3hXc3PMP4EcJxWAf9suBuM+cBtbXueqKO5TcDYWDWXw=",
+      "hash": "sha256-w8f+QlKNpKcA9j3OctzD5YwZKwFV+zRW3mhl1IZGbb8=",
       "url": "index.html"
     },
     {
