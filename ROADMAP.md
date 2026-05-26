@@ -122,14 +122,14 @@ Equivalente al H15/H16 del Excel.
     - App renombrada a "Gastos" en title, manifest, navbar.
     - Paleta grafito + indigo: variables CSS en `app.css` (`--accent`, `--accent-hover`, `--accent-soft`, `--surface-dark`, `--surface-deep`).
     - Sidebar con gradiente vertical (grafito → indigo oscuro).
-    - Icono SVG generado (G indigo sobre fondo con el mismo gradiente).
+    - Icono SVG propio: gráfico de barras ascendentes con línea conectora y punto, sobre el gradiente. Sustituye al icono Blazor.
     - Sidebar oculto cuando no estás logueado (MainLayout suscrito a `AuthService.OnAuthStateChanged`).
     - Limpieza: link "About" eliminado, `sample-data/weather.json` y PNGs del template borrados.
 - [ ] Modo oscuro.
 - [x] Animaciones/transiciones suaves.
     - Fade-in al navegar entre páginas (wrapper interno con `@key="@Nav.Uri"` en MainLayout).
     - Modales con pop-in (escala + fade) — ConfirmModal y modales inline de `/mes`.
-    - Stagger de las cards en Home (aparición en cascada).
+    - Stagger en TODAS las pantallas (Home, Dashboard, /mes, /nuevo-gasto, /categorias, /setup): hijos aparecen en cascada con la clase `.stagger`.
     - Press effect global en botones (`scale(0.97)` al pulsar).
     - Expansión animada de bloques en `/mes` con el truco `grid-template-rows: 0fr → 1fr` (más flecha que rota 90°).
     - Bounce de chips al seleccionar categoría en `/nuevo-gasto`.
@@ -179,6 +179,17 @@ Equivalente al H15/H16 del Excel.
 ---
 
 ## Cambios y notas posteriores
+
+### 2026-05-24 — Cierre del día: saldo + dashboard + animaciones
+
+Una sesión muy productiva. En orden:
+
+1. **Modelo de saldos** (cierre del tema pendiente): previsión compartida redefinida como aporte conjunto, nómina alimenta personal, 50% sale a la compartida, saldo final arrastra al siguiente mes con confirmación manual. Ver entrada dedicada abajo.
+2. **Botón "+ Añadir gasto" al guardar**: pequeño UX — ahora al guardar un gasto se vuelve a `/mes` automáticamente (antes se quedaba en la pantalla para añadir otro). Decisión revertida porque Javi prefería el cierre rápido.
+3. **Dashboard (Fase 3)**: pantalla `/dashboard` con KPI mensual, gráfico de barras de evolución 6 meses y tarta donut por categoría. Dependencia nueva: `Blazor-ApexCharts` 6.1.0.
+4. **Animaciones (Fase 3)**: pack completo de animaciones CSS suaves (fade entre páginas, stagger en cascada en todas las pantallas, modales con pop-in, expansión animada de bloques en `/mes`, bounce de chips, press effect en botones). Respeto a `prefers-reduced-motion`. Creado `EmptyLayout.razor` para Login porque `position: fixed` no convive con `transform` en ancestros.
+
+**Estado al cierre**: la app está prácticamente completa para uso diario en solitario. Lo que queda en Fase 3: filtros y búsqueda en histórico, edición masiva, modo oscuro. Pendiente también la Fase 4 (multiusuario para Marta) y Fase 2.6 (importar histórico del Excel, pospuesto).
 
 ### 2026-05-24 — Saldo bancario acumulativo: modelo final
 
