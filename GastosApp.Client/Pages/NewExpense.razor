@@ -35,13 +35,6 @@ else
             }
         </ul>
 
-        @if (toastVisible)
-        {
-            <div class="alert alert-success text-center fw-bold" role="alert">
-                ✓ Gasto guardado
-            </div>
-        }
-
         @if (!string.IsNullOrEmpty(errorMessage))
         {
             <div class="alert alert-danger">@errorMessage</div>
@@ -206,7 +199,6 @@ else
 
     private bool isLoading = true;
     private bool isSaving = false;
-    private bool toastVisible = false;
     private string errorMessage = "";
 
     private List<Account> accounts = new();
@@ -373,7 +365,6 @@ else
 
         isSaving = true;
         errorMessage = "";
-        toastVisible = false;
 
         try
         {
@@ -386,8 +377,6 @@ else
                     description.Trim(),
                     amount.Value,
                     expenseDate);
-
-                Nav.NavigateTo("mes");
             }
             else
             {
@@ -397,10 +386,9 @@ else
                     description.Trim(),
                     amount.Value,
                     expenseDate);
-
-                ResetForm();
-                await ShowToast();
             }
+
+            Nav.NavigateTo("mes");
         }
         catch (Exception ex)
         {
@@ -413,21 +401,4 @@ else
     }
 
     private void HandleCancel() => Nav.NavigateTo("mes");
-
-    private void ResetForm()
-    {
-        amount = null;
-        description = "";
-        selectedCategoryId = null;
-        expenseDate = DateTime.Today;
-    }
-
-    private async Task ShowToast()
-    {
-        toastVisible = true;
-        StateHasChanged();
-        await Task.Delay(2000);
-        toastVisible = false;
-        StateHasChanged();
-    }
 }
