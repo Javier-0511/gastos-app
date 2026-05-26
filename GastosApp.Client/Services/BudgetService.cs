@@ -12,7 +12,8 @@ public class BudgetService
     }
 
     /// <summary>
-    /// Devuelve la previsión de esa cuenta-mes, o null si no existe.
+    /// Devuelve el registro mensual de esa cuenta-mes, o null si no existe.
+    /// Contiene previsión, saldo inicial e ingreso (los dos últimos son nullable).
     /// </summary>
     public async Task<MonthlyBudget?> GetForMonthAsync(Guid accountId, int year, int month)
     {
@@ -30,13 +31,34 @@ public class BudgetService
     }
 
     /// <summary>
-    /// Crea o actualiza la previsión de esa cuenta-mes.
-    /// Usa upsert con la unique constraint (account_id, year, month) como conflict target.
+    /// Actualiza la previsión (amount). Crea el registro si no existe.
     /// </summary>
-    public async Task<MonthlyBudget> UpsertAsync(Guid accountId, int year, int month, decimal amount)
+    public Task<MonthlyBudget> SetAmountAsync(Guid accountId, int year, int month, decimal amount) =>
+        UpsertFieldsAsync(accountId, year, month, b => b.Amount = amount, defaultAmount: amount);
+
+    /// <summary>
+    /// Actualiza el saldo inicial. Crea el registro si no existe.
+    /// </summary>
+    public Task<MonthlyBudget> SetOpeningBalanceAsync(Guid accountId, int year, int month, decimal openingBalance) =>
+        UpsertFieldsAsync(accountId, year, month, b => b.OpeningBalance = openingBalance);
+
+    /// <summary>
+    /// Actualiza la nómina del mes. Crea el registro si no existe.
+    /// </summary>
+    public Task<MonthlyBudget> SetIncomeAsync(Guid accountId, int year, int month, decimal income) =>
+        UpsertFieldsAsync(accountId, year, month, b => b.Income = income);
+
+    // Helper interno: busca el registro y le aplica una mutación, o lo crea si no existe.
+    // `defaultAmount` solo se usa al crear (la columna amount es NOT NULL en la BBDD; si
+    // creamos un registro porque el usuario está editando saldo/nómina antes que previsión,
+    // ponemos amount = 0 por defecto).
+    private async Task<MonthlyBudget> UpsertFieldsAsync(
+        Guid accountId,
+        int year,
+        int month,
+        Action<MonthlyBudget> mutate,
+        decimal defaultAmount = 0m)
     {
-        // Buscamos si ya existe para hacer update en su lugar (más predecible que
-        // el upsert del cliente .NET, que requiere mapear bien la unique constraint).
         var existing = await GetForMonthAsync(accountId, year, month);
 
         if (existing is null)
@@ -46,15 +68,16 @@ public class BudgetService
                 AccountId = accountId,
                 Year = year,
                 Month = month,
-                Amount = amount
+                Amount = defaultAmount
             };
+            mutate(newBudget);
 
             var response = await _supabase.Client.From<MonthlyBudget>().Insert(newBudget);
             return response.Models.First();
         }
         else
         {
-            existing.Amount = amount;
+            mutate(existing);
             var response = await existing.Update<MonthlyBudget>();
             return response.Models.First();
         }

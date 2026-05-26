@@ -87,7 +87,13 @@ Equivalente al H15/H16 del Excel.
 - [x] Modal de edición inline reutilizando estilos de `ConfirmModal`.
 - [x] Resto en rojo cuando es negativo.
 - [x] Bonus: botón "+ Añadir gasto" en `/mes` que preselecciona la cuenta activa (`/nuevo-gasto?accountId={guid}`).
-- [ ] ~~Saldo bancario acumulativo~~ → **Pospuesto**. Discutido: distinguir "cuánto me sobra este mes" (flujo de caja) de "cuánto hay en el banco" (saldo acumulado). El segundo requiere registro exhaustivo y suele descuadrar con el banco real. Volveremos cuando esté más claro qué se necesita.
+- [x] **Saldo bancario acumulativo** (2026-05-24): retomado y resuelto con el modelo aclarado por Javi.
+    - Migración: `opening_balance` e `income` añadidos a `monthly_budgets` (ver `supabase/migrations.sql`).
+    - Personal: saldo_inicial + nómina − aporte_a_compartida (50% del aporte conjunto) − gastos = saldo_final.
+    - Compartida: saldo_inicial + aporte_conjunto − gastos = saldo_final.
+    - Modal genérico para editar saldo / nómina / aporte (reutiliza el patrón).
+    - Auto-arrastre: al editar saldo inicial de un mes sin definir, se precarga la sugerencia calculada del mes anterior. El usuario confirma (no se guarda automático).
+    - `share_percent` hardcoded a 50% por ahora (TODO en código para leerlo de `account_members` cuando entre Marta).
 
 ### 2.6 — Importar histórico del Excel [POSPUESTO]
 
@@ -159,6 +165,17 @@ Equivalente al H15/H16 del Excel.
 ---
 
 ## Cambios y notas posteriores
+
+### 2026-05-24 — Saldo bancario acumulativo: modelo final
+
+Tras la conversación pendiente desde el 23, Javi aclaró el modelo: la previsión de la cuenta compartida representa el **aporte conjunto** al banco, no el presupuesto de gasto. Implementado así:
+
+- **Personal**: saldo_inicial + nómina − aporte_a_compartida (50% del aporte conjunto del mismo mes) − gastos_personales = saldo_final.
+- **Compartida**: saldo_inicial + aporte_conjunto − gastos_compartidos = saldo_final.
+
+La previsión personal como "presupuesto de gasto" se eliminó (no encaja en este modelo). Si en el futuro hay que limitar gasto personal se añadirá como campo separado.
+
+Auto-arrastre del saldo: al abrir el modal de saldo inicial en un mes sin definir, se precalcula el saldo final del mes anterior y se ofrece como sugerencia editable. No se guarda hasta que el usuario confirme — permite ajustar contra el banco real.
 
 ### 2026-05-23 — Saldo bancario acumulativo pospuesto
 

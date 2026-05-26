@@ -49,63 +49,110 @@ else
             }
         </ul>
 
-        @* Bloque de previsión / gastado / resto *@
-        <div class="budget-card mb-3">
-            @if (currentBudget is null)
-            {
-                <div class="text-center py-2">
-                    <div class="text-muted mb-2">Sin previsión definida este mes</div>
-                    <div class="text-muted small mb-2">Gastado: @FormatMoney(currentTotal)</div>
-                    <button class="btn btn-outline-primary btn-sm" @onclick="OpenBudgetModal">
-                        Establecer previsión
-                    </button>
-                </div>
-            }
-            else
-            {
-                var budget = currentBudget.Amount;
-                var spent = currentTotal;
-                var remaining = budget - spent;
-                var percent = budget > 0 ? Math.Min((double)(spent / budget) * 100, 100) : 0;
-                var statusClass = StatusClass(spent, budget);
-
-                <div class="budget-row">
-                    <span class="budget-label">Previsión</span>
-                    <span class="budget-value">@FormatMoney(budget)</span>
-                    <button class="btn btn-sm btn-outline-secondary"
-                            @onclick="OpenBudgetModal">Editar</button>
-                </div>
-                <div class="budget-row">
-                    <span class="budget-label">Gastado</span>
-                    <span class="budget-value">@FormatMoney(spent)</span>
-                </div>
-                <div class="budget-row">
-                    <span class="budget-label">Resto</span>
-                    <span class="budget-value @(remaining < 0 ? "text-danger" : "text-success") fw-bold">
-                        @FormatMoney(remaining)
-                    </span>
-                </div>
-
-                <div class="progress mt-2" style="height: 10px;">
-                    <div class="progress-bar @statusClass"
-                         role="progressbar"
-                         style="width: @percent.ToString("F0", CultureInfo.InvariantCulture)%;"
-                         aria-valuenow="@percent.ToString("F0", CultureInfo.InvariantCulture)"
-                         aria-valuemin="0"
-                         aria-valuemax="100"></div>
-                </div>
-                <div class="text-end small text-muted mt-1">
-                    @percent.ToString("F0", new CultureInfo("es-ES"))% consumido
-                </div>
-            }
-        </div>
-
         @if (!string.IsNullOrEmpty(errorMessage))
         {
             <div class="alert alert-danger">@errorMessage</div>
         }
 
-        @* Bloques agrupados *@
+        @* Bloque de saldos: una variante por tipo de cuenta *@
+        <div class="balance-card mb-3">
+            @if (IsCurrentAccountShared)
+            {
+                @* === COMPARTIDA: saldo inicial + aporte conjunto - gastos = saldo final === *@
+                <div class="balance-row">
+                    <span class="balance-label">Saldo inicial</span>
+                    <span class="balance-value">
+                        @(currentBudget?.OpeningBalance is decimal ob1
+                            ? FormatMoney(ob1)
+                            : SinDefinir())
+                    </span>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            @onclick="OpenOpeningBalanceModal">
+                        @(currentBudget?.OpeningBalance is null ? "Establecer" : "Editar")
+                    </button>
+                </div>
+
+                <div class="balance-row">
+                    <span class="balance-label">Aporte conjunto</span>
+                    <span class="balance-value">
+                        @(currentBudget is null
+                            ? SinDefinir()
+                            : FormatMoney(currentBudget.Amount))
+                    </span>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            @onclick="OpenAmountModal">
+                        @(currentBudget is null ? "Establecer" : "Editar")
+                    </button>
+                </div>
+
+                <div class="balance-row">
+                    <span class="balance-label">Gastos del mes</span>
+                    <span class="balance-value text-danger">−@FormatMoney(currentTotal)</span>
+                </div>
+
+                <hr class="my-2"/>
+
+                <div class="balance-row">
+                    <span class="balance-label fw-bold">Saldo final</span>
+                    <span class="balance-value fw-bold @(SaldoFinal() < 0 ? "text-danger" : "text-success")">
+                        @(SaldoFinal() is decimal sf1 ? FormatMoney(sf1) : "—")
+                    </span>
+                </div>
+            }
+            else
+            {
+                @* === PERSONAL: saldo inicial + nómina - aporte_compartida - gastos = saldo final === *@
+                <div class="balance-row">
+                    <span class="balance-label">Saldo inicial</span>
+                    <span class="balance-value">
+                        @(currentBudget?.OpeningBalance is decimal ob2
+                            ? FormatMoney(ob2)
+                            : SinDefinir())
+                    </span>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            @onclick="OpenOpeningBalanceModal">
+                        @(currentBudget?.OpeningBalance is null ? "Establecer" : "Editar")
+                    </button>
+                </div>
+
+                <div class="balance-row">
+                    <span class="balance-label">Nómina</span>
+                    <span class="balance-value">
+                        @(currentBudget?.Income is decimal inc
+                            ? FormatMoney(inc)
+                            : SinDefinir())
+                    </span>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            @onclick="OpenIncomeModal">
+                        @(currentBudget?.Income is null ? "Establecer" : "Editar")
+                    </button>
+                </div>
+
+                <div class="balance-row">
+                    <span class="balance-label">
+                        Aporte a compartida
+                        <small class="text-muted">(50% de @FormatMoney(sharedAmount))</small>
+                    </span>
+                    <span class="balance-value text-danger">−@FormatMoney(AporteACompartida())</span>
+                </div>
+
+                <div class="balance-row">
+                    <span class="balance-label">Gastos personales</span>
+                    <span class="balance-value text-danger">−@FormatMoney(currentTotal)</span>
+                </div>
+
+                <hr class="my-2"/>
+
+                <div class="balance-row">
+                    <span class="balance-label fw-bold">Saldo final</span>
+                    <span class="balance-value fw-bold @(SaldoFinal() < 0 ? "text-danger" : "text-success")">
+                        @(SaldoFinal() is decimal sf2 ? FormatMoney(sf2) : "—")
+                    </span>
+                </div>
+            }
+        </div>
+
+        @* Bloques de categorías agrupados *@
         @if (currentExpenses.Count == 0)
         {
             <p class="text-muted text-center my-4">No hay gastos en esta cuenta este mes.</p>
@@ -181,43 +228,43 @@ else
               ConfirmText="Borrar"
               ConfirmClass="btn-danger" />
 
-@* Modal de edición de previsión *@
-@if (budgetModalVisible)
+@* Modal genérico para editar un campo numérico (saldo / nómina / aporte) *@
+@if (numberModalVisible)
 {
-    <div class="modal-backdrop-custom" @onclick="CloseBudgetModal">
+    <div class="modal-backdrop-custom" @onclick="CloseNumberModal">
         <div class="modal-card" @onclick:stopPropagation="true">
-            <h5 class="mb-2">Previsión del mes</h5>
-            <p class="text-muted small mb-3">
-                Importe que esperas gastar en esta cuenta durante @MonthLabel.
-            </p>
+            <h5 class="mb-2">@numberModalTitle</h5>
+            @if (!string.IsNullOrEmpty(numberModalHint))
+            {
+                <p class="text-muted small mb-3">@numberModalHint</p>
+            }
 
             <div class="input-group input-group-lg mb-3">
                 <input type="number"
                        inputmode="decimal"
                        step="0.01"
-                       min="0"
                        class="form-control"
                        placeholder="0,00"
-                       @bind="budgetInput"
+                       @bind="numberInput"
                        @bind:event="oninput" />
                 <span class="input-group-text">€</span>
             </div>
 
-            @if (!string.IsNullOrEmpty(budgetModalError))
+            @if (!string.IsNullOrEmpty(numberModalError))
             {
-                <div class="alert alert-danger small">@budgetModalError</div>
+                <div class="alert alert-danger small">@numberModalError</div>
             }
 
             <div class="d-flex gap-2 justify-content-end">
                 <button class="btn btn-outline-secondary"
-                        @onclick="CloseBudgetModal"
-                        disabled="@isSavingBudget">
+                        @onclick="CloseNumberModal"
+                        disabled="@isSavingNumber">
                     Cancelar
                 </button>
                 <button class="btn btn-primary"
-                        @onclick="SaveBudget"
-                        disabled="@(isSavingBudget || budgetInput is null or < 0)">
-                    @(isSavingBudget ? "Guardando..." : "Guardar")
+                        @onclick="SaveNumberModal"
+                        disabled="@(isSavingNumber || numberInput is null)">
+                    @(isSavingNumber ? "Guardando..." : "Guardar")
                 </button>
             </div>
         </div>
@@ -231,14 +278,14 @@ else
         padding: 16px;
     }
 
-    .budget-card {
+    .balance-card {
         background: white;
         border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 14px;
+        border-radius: 12px;
+        padding: 16px 18px;
     }
 
-    .budget-row {
+    .balance-row {
         display: grid;
         grid-template-columns: 1fr auto auto;
         gap: 12px;
@@ -246,8 +293,8 @@ else
         padding: 4px 0;
     }
 
-    .budget-label { color: #6c757d; }
-    .budget-value { font-weight: 500; }
+    .balance-label { color: #6c757d; }
+    .balance-value { font-weight: 500; text-align: right; }
 
     .block-card {
         border: 1px solid #dee2e6;
@@ -309,7 +356,7 @@ else
         margin-top: 4px;
     }
 
-    /* Modal de edición de previsión (mismo look que ConfirmModal) */
+    /* Modal (mismo look que ConfirmModal) */
     .modal-backdrop-custom {
         position: fixed;
         inset: 0;
@@ -340,20 +387,31 @@ else
     private List<Expense> currentExpenses = new();
     private MonthlyBudget? currentBudget;
 
+    // Previsión de la cuenta compartida en el mes actual.
+    // La necesitamos para calcular el aporte cuando la pestaña activa es personal.
+    private MonthlyBudget? sharedBudgetThisMonth;
+
     private Guid selectedAccountId;
     private int currentYear;
     private int currentMonth;
 
-    // Bloques expandidos en la UI actual (vaciado al cambiar mes / cuenta).
     private HashSet<string> expandedBlocks = new();
 
     private ConfirmModal? confirmModal;
 
-    // Estado del modal de edición de previsión
-    private bool budgetModalVisible = false;
-    private bool isSavingBudget = false;
-    private decimal? budgetInput;
-    private string budgetModalError = "";
+    // === Modal genérico de número ===
+    private bool numberModalVisible = false;
+    private bool isSavingNumber = false;
+    private decimal? numberInput;
+    private string numberModalTitle = "";
+    private string numberModalHint = "";
+    private string numberModalError = "";
+    private Func<decimal, Task>? numberModalOnSave;
+
+    // TODO: cuando entre Marta y queramos soportar share_percent dinámico,
+    // leerlo de account_members del usuario en la cuenta compartida.
+    // Por ahora siempre 50%.
+    private const decimal MyShareInShared = 0.5m;
 
     private static readonly string[] SharedBlocks = { "fijo", "comida", "variable", "minicompra" };
     private static readonly string[] PersonalBlocks = { "individual" };
@@ -368,6 +426,15 @@ else
     }
 
     private decimal currentTotal => currentExpenses.Sum(e => e.Amount);
+
+    private Account? CurrentAccount =>
+        accounts.FirstOrDefault(a => a.Id == selectedAccountId);
+
+    private bool IsCurrentAccountShared => CurrentAccount?.IsShared == true;
+
+    private Account? SharedAccount => accounts.FirstOrDefault(a => a.IsShared);
+
+    private decimal sharedAmount => sharedBudgetThisMonth?.Amount ?? 0m;
 
     protected override async Task OnInitializedAsync()
     {
@@ -413,7 +480,7 @@ else
     private async Task LoadMonthData()
     {
         await LoadExpenses();
-        await LoadBudget();
+        await LoadBudgets();
     }
 
     private async Task LoadExpenses()
@@ -433,16 +500,34 @@ else
         }
     }
 
-    private async Task LoadBudget()
+    private async Task LoadBudgets()
     {
         try
         {
             currentBudget = await Budgets.GetForMonthAsync(selectedAccountId, currentYear, currentMonth);
+
+            // Si la cuenta activa es personal, también cargamos la previsión de
+            // la compartida para calcular el aporte. Si la activa ya es la
+            // compartida, ese mismo budget también nos vale.
+            if (IsCurrentAccountShared)
+            {
+                sharedBudgetThisMonth = currentBudget;
+            }
+            else if (SharedAccount is not null)
+            {
+                sharedBudgetThisMonth = await Budgets.GetForMonthAsync(
+                    SharedAccount.Id, currentYear, currentMonth);
+            }
+            else
+            {
+                sharedBudgetThisMonth = null;
+            }
         }
         catch (Exception ex)
         {
             errorMessage = $"Error al cargar previsión: {ex.Message}";
             currentBudget = null;
+            sharedBudgetThisMonth = null;
         }
     }
 
@@ -480,11 +565,8 @@ else
     private Category? CategoryOf(Guid categoryId) =>
         categoryMap.TryGetValue(categoryId, out var c) ? c : null;
 
-    private string[] BlocksForSelectedAccount()
-    {
-        var acc = accounts.FirstOrDefault(a => a.Id == selectedAccountId);
-        return acc?.IsShared == true ? SharedBlocks : PersonalBlocks;
-    }
+    private string[] BlocksForSelectedAccount() =>
+        IsCurrentAccountShared ? SharedBlocks : PersonalBlocks;
 
     private async Task HandleDelete(Expense exp)
     {
@@ -504,56 +586,175 @@ else
         }
     }
 
-    private void OpenBudgetModal()
+    // ===== Cálculos derivados =====
+
+    private decimal AporteACompartida()
     {
-        budgetInput = currentBudget?.Amount;
-        budgetModalError = "";
-        budgetModalVisible = true;
+        if (IsCurrentAccountShared) return 0m;
+        return sharedAmount * MyShareInShared;
     }
 
-    private void CloseBudgetModal()
+    /// <summary>
+    /// Saldo final del mes para la cuenta activa.
+    /// Devuelve null si falta opening_balance (no se puede calcular).
+    /// </summary>
+    private decimal? SaldoFinal()
     {
-        if (isSavingBudget) return;
-        budgetModalVisible = false;
+        if (currentBudget?.OpeningBalance is not decimal opening) return null;
+
+        if (IsCurrentAccountShared)
+        {
+            // Compartida: saldo_inicial + aporte_conjunto − gastos
+            var entradas = currentBudget?.Amount ?? 0m;
+            return opening + entradas - currentTotal;
+        }
+        else
+        {
+            // Personal: saldo_inicial + nómina − aporte_a_compartida − gastos
+            var nomina = currentBudget?.Income ?? 0m;
+            return opening + nomina - AporteACompartida() - currentTotal;
+        }
     }
 
-    private async Task SaveBudget()
-    {
-        if (budgetInput is null or < 0) return;
+    // ===== Modales =====
 
-        isSavingBudget = true;
-        budgetModalError = "";
+    private async Task OpenOpeningBalanceModal()
+    {
+        numberModalTitle = "Saldo inicial del mes";
+        numberModalError = "";
+        numberModalOnSave = async (value) =>
+        {
+            currentBudget = await Budgets.SetOpeningBalanceAsync(
+                selectedAccountId, currentYear, currentMonth, value);
+            if (IsCurrentAccountShared) sharedBudgetThisMonth = currentBudget;
+        };
+
+        if (currentBudget?.OpeningBalance is decimal existing)
+        {
+            // Ya tenemos saldo definido: precargamos el actual para editar.
+            numberInput = existing;
+            numberModalHint = $"Dinero que hay en la cuenta al inicio de {MonthLabel}.";
+        }
+        else
+        {
+            // No hay saldo: intentamos sugerir el saldo final del mes anterior.
+            var suggestion = await CalcularSaldoFinalMesAnterior();
+            numberInput = suggestion;
+            numberModalHint = suggestion is null
+                ? $"Dinero que había en la cuenta al inicio de {MonthLabel}."
+                : $"Sugerencia: saldo final del mes anterior ({FormatMoney(suggestion.Value)}). Ajústalo si no coincide con el banco.";
+        }
+
+        numberModalVisible = true;
+    }
+
+    /// <summary>
+    /// Saldo final calculado del mes inmediatamente anterior, para sugerirlo
+    /// como saldo inicial del mes actual. Devuelve null si falta información
+    /// (sin opening_balance del mes anterior).
+    /// </summary>
+    private async Task<decimal?> CalcularSaldoFinalMesAnterior()
+    {
+        try
+        {
+            var prevDate = new DateTime(currentYear, currentMonth, 1).AddMonths(-1);
+            int py = prevDate.Year, pm = prevDate.Month;
+
+            var prevBudget = await Budgets.GetForMonthAsync(selectedAccountId, py, pm);
+            if (prevBudget?.OpeningBalance is not decimal prevOpening)
+                return null;
+
+            // Gastos del mes anterior de la misma cuenta.
+            var prevExpensesAll = await Expenses.GetByMonthAsync(py, pm);
+            var prevSpent = prevExpensesAll
+                .Where(e => e.AccountId == selectedAccountId)
+                .Sum(e => e.Amount);
+
+            if (IsCurrentAccountShared)
+            {
+                return prevOpening + (prevBudget.Amount) - prevSpent;
+            }
+            else
+            {
+                var prevSharedBudget = SharedAccount is null
+                    ? null
+                    : await Budgets.GetForMonthAsync(SharedAccount.Id, py, pm);
+                var prevAporte = (prevSharedBudget?.Amount ?? 0m) * MyShareInShared;
+                var prevIncome = prevBudget.Income ?? 0m;
+                return prevOpening + prevIncome - prevAporte - prevSpent;
+            }
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private void OpenIncomeModal()
+    {
+        numberInput = currentBudget?.Income;
+        numberModalTitle = "Nómina del mes";
+        numberModalHint = $"Ingresos que entran en esta cuenta durante {MonthLabel}.";
+        numberModalError = "";
+        numberModalOnSave = async (value) =>
+        {
+            currentBudget = await Budgets.SetIncomeAsync(
+                selectedAccountId, currentYear, currentMonth, value);
+        };
+        numberModalVisible = true;
+    }
+
+    private void OpenAmountModal()
+    {
+        numberInput = currentBudget?.Amount;
+        numberModalTitle = "Aporte conjunto del mes";
+        numberModalHint = $"Cantidad total que entra en la cuenta compartida en {MonthLabel} (la suma de los dos miembros).";
+        numberModalError = "";
+        numberModalOnSave = async (value) =>
+        {
+            currentBudget = await Budgets.SetAmountAsync(
+                selectedAccountId, currentYear, currentMonth, value);
+            if (IsCurrentAccountShared) sharedBudgetThisMonth = currentBudget;
+        };
+        numberModalVisible = true;
+    }
+
+    private void CloseNumberModal()
+    {
+        if (isSavingNumber) return;
+        numberModalVisible = false;
+        numberModalOnSave = null;
+    }
+
+    private async Task SaveNumberModal()
+    {
+        if (numberInput is null || numberModalOnSave is null) return;
+
+        isSavingNumber = true;
+        numberModalError = "";
 
         try
         {
-            currentBudget = await Budgets.UpsertAsync(
-                selectedAccountId,
-                currentYear,
-                currentMonth,
-                budgetInput.Value);
-            budgetModalVisible = false;
+            await numberModalOnSave(numberInput.Value);
+            numberModalVisible = false;
+            numberModalOnSave = null;
         }
         catch (Exception ex)
         {
-            budgetModalError = $"Error al guardar: {ex.Message}";
+            numberModalError = $"Error al guardar: {ex.Message}";
         }
         finally
         {
-            isSavingBudget = false;
+            isSavingNumber = false;
         }
     }
 
-    private static string StatusClass(decimal spent, decimal budget)
-    {
-        if (budget <= 0) return "bg-secondary";
-        var ratio = spent / budget;
-        if (ratio < 0.8m) return "bg-success";
-        if (ratio < 1m)   return "bg-warning";
-        return "bg-danger";
-    }
+    // ===== Helpers de formato =====
 
     private static string FormatMoney(decimal amount) =>
         amount.ToString("N2", new CultureInfo("es-ES")) + " €";
+
+    private static string SinDefinir() => "—";
 
     private static string BlockLabel(string block) => block switch
     {
