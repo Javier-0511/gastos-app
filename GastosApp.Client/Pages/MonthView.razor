@@ -170,51 +170,54 @@ else
 
                 <div class="block-card mb-2">
                     <button class="block-header" @onclick="() => ToggleBlock(blockKey)">
-                        <span class="block-arrow">@(isExpanded ? "▾" : "▸")</span>
+                        <span class="block-arrow @(isExpanded ? "expanded" : "")">▸</span>
                         <span class="block-name">@BlockLabel(blockKey)</span>
                         <span class="block-count text-muted">@blockExpenses.Count</span>
                         <span class="block-total">@FormatMoney(blockTotal)</span>
                     </button>
 
-                    @if (isExpanded)
-                    {
-                        @if (blockExpenses.Count == 0)
-                        {
-                            <div class="block-empty text-muted small">Sin gastos en este bloque.</div>
-                        }
-                        else
-                        {
-                            <ul class="list-unstyled mb-0">
-                                @foreach (var exp in blockExpenses.OrderByDescending(e => e.ExpenseDate))
-                                {
-                                    <li class="expense-row">
-                                        <div class="expense-main">
-                                            <div class="expense-title">
-                                                @(string.IsNullOrWhiteSpace(exp.Description)
-                                                    ? CategoryOf(exp.CategoryId)?.Name ?? "(sin categoría)"
-                                                    : exp.Description)
+                    @* Wrapper siempre presente. La animación va por CSS:
+                       grid-template-rows 0fr → 1fr cuando .expanded *@
+                    <div class="block-content-wrap @(isExpanded ? "expanded" : "")">
+                        <div class="block-content">
+                            @if (blockExpenses.Count == 0)
+                            {
+                                <div class="block-empty text-muted small">Sin gastos en este bloque.</div>
+                            }
+                            else
+                            {
+                                <ul class="list-unstyled mb-0">
+                                    @foreach (var exp in blockExpenses.OrderByDescending(e => e.ExpenseDate))
+                                    {
+                                        <li class="expense-row">
+                                            <div class="expense-main">
+                                                <div class="expense-title">
+                                                    @(string.IsNullOrWhiteSpace(exp.Description)
+                                                        ? CategoryOf(exp.CategoryId)?.Name ?? "(sin categoría)"
+                                                        : exp.Description)
+                                                </div>
+                                                <div class="expense-meta text-muted small">
+                                                    @exp.ExpenseDate.ToString("dd MMM", new CultureInfo("es-ES"))
+                                                    · @(CategoryOf(exp.CategoryId)?.Name ?? "—")
+                                                </div>
                                             </div>
-                                            <div class="expense-meta text-muted small">
-                                                @exp.ExpenseDate.ToString("dd MMM", new CultureInfo("es-ES"))
-                                                · @(CategoryOf(exp.CategoryId)?.Name ?? "—")
+                                            <div class="expense-amount">@FormatMoney(exp.Amount)</div>
+                                            <div class="expense-actions">
+                                                <a class="btn btn-sm btn-outline-secondary"
+                                                   href="@($"nuevo-gasto?id={exp.Id}")">
+                                                    Editar
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-danger"
+                                                        @onclick="() => HandleDelete(exp)">
+                                                    Borrar
+                                                </button>
                                             </div>
-                                        </div>
-                                        <div class="expense-amount">@FormatMoney(exp.Amount)</div>
-                                        <div class="expense-actions">
-                                            <a class="btn btn-sm btn-outline-secondary"
-                                               href="@($"nuevo-gasto?id={exp.Id}")">
-                                                Editar
-                                            </a>
-                                            <button class="btn btn-sm btn-outline-danger"
-                                                    @onclick="() => HandleDelete(exp)">
-                                                Borrar
-                                            </button>
-                                        </div>
-                                    </li>
-                                }
-                            </ul>
-                        }
-                    }
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+                    </div>
                 </div>
             }
         }
@@ -318,7 +321,30 @@ else
 
     .block-header:hover { background: #e9ecef; }
 
-    .block-arrow { color: #6c757d; font-size: 0.9rem; }
+    .block-arrow {
+        color: #6c757d;
+        font-size: 0.9rem;
+        transition: transform 0.2s ease-out;
+        display: inline-block;
+    }
+    .block-arrow.expanded { transform: rotate(90deg); }
+
+    /* Truco moderno para animar height: auto.
+       grid-template-rows interpola entre 0fr y 1fr → el hijo se "extiende"
+       suavemente desde alto 0 hasta su alto natural. min-height: 0 en el
+       hijo es necesario para que el grid pueda comprimirlo a 0. */
+    .block-content-wrap {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 0.25s ease-out;
+    }
+    .block-content-wrap.expanded {
+        grid-template-rows: 1fr;
+    }
+    .block-content {
+        overflow: hidden;
+        min-height: 0;
+    }
     .block-name  { font-weight: 600; }
     .block-count {
         background: #dee2e6;
@@ -366,6 +392,7 @@ else
         justify-content: center;
         z-index: 1050;
         padding: 16px;
+        animation: fade-in-up 0.18s ease-out both;
     }
 
     .modal-card {
@@ -375,6 +402,7 @@ else
         max-width: 400px;
         width: 100%;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        animation: pop-in 0.22s ease-out both;
     }
 </style>
 

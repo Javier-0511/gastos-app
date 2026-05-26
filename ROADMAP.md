@@ -126,7 +126,15 @@ Equivalente al H15/H16 del Excel.
     - Sidebar oculto cuando no estás logueado (MainLayout suscrito a `AuthService.OnAuthStateChanged`).
     - Limpieza: link "About" eliminado, `sample-data/weather.json` y PNGs del template borrados.
 - [ ] Modo oscuro.
-- [ ] Animaciones/transiciones suaves.
+- [x] Animaciones/transiciones suaves.
+    - Fade-in al navegar entre páginas (wrapper interno con `@key="@Nav.Uri"` en MainLayout).
+    - Modales con pop-in (escala + fade) — ConfirmModal y modales inline de `/mes`.
+    - Stagger de las cards en Home (aparición en cascada).
+    - Press effect global en botones (`scale(0.97)` al pulsar).
+    - Expansión animada de bloques en `/mes` con el truco `grid-template-rows: 0fr → 1fr` (más flecha que rota 90°).
+    - Bounce de chips al seleccionar categoría en `/nuevo-gasto`.
+    - Respeto a `prefers-reduced-motion` (accesibilidad).
+    - `EmptyLayout.razor` para Login: evita que el `transform` del fade-in rompa el `position: fixed` del fondo full-screen.
 
 ---
 

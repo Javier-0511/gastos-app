@@ -2,6 +2,7 @@
 @using GastosApp.Client.Services
 @implements IDisposable
 @inject AuthService Auth
+@inject NavigationManager Nav
 
 <div class="page @(Auth.IsLoggedIn ? "" : "no-sidebar")">
     @if (Auth.IsLoggedIn)
@@ -13,7 +14,13 @@
 
     <main>
         <article class="content px-4">
-            @Body
+            @* Wrapper interno con @key vinculado a la URL: cada navegación
+               destruye este div y lo recrea, reactivando la animación CSS.
+               Lo separamos del article para que el transform de la animación
+               no afecte al padding del layout. *@
+            <div class="page-enter" @key="@Nav.Uri">
+                @Body
+            </div>
         </article>
     </main>
 </div>
@@ -21,8 +28,9 @@
 @code {
     protected override void OnInitialized()
     {
-        // Cuando cambia la sesión (login/logout), forzamos repintado para
-        // mostrar u ocultar el sidebar.
+        // Solo suscribimos al cambio de sesión (login/logout) para mostrar
+        // u ocultar el sidebar. La navegación entre rutas la maneja Blazor
+        // automáticamente: el @key del div interior se reanima solo.
         Auth.OnAuthStateChanged += HandleAuthChanged;
     }
 
