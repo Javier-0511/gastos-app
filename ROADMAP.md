@@ -108,8 +108,14 @@ Equivalente al H15/H16 del Excel.
 
 ## 🟡 Fase 3 — Pulido y mejoras
 
-- [ ] Dashboard / resumen con gráficos (recharts equivalente para Blazor, o JS interop).
-- [ ] Vista de categorías con tarta de gastos.
+- [x] Dashboard / resumen con gráficos (`Blazor-ApexCharts` v6).
+    - Pantalla `/dashboard` con pestañas Personal / Compartida.
+    - KPI: total mes + comparativa vs mes anterior (↑ rojo / ↓ verde).
+    - Gráfico de barras: evolución últimos 6 meses.
+    - Tarta: reparto por categoría del mes.
+    - Una sola query al rango de 6 meses (`GetByDateRangeAsync`) y agregaciones en memoria.
+    - Truco contra el "ghost data" al cambiar pestañas: `@key` ligado a `selectedAccountId` + reset de colecciones + `Task.Yield()` antes de recargar.
+- [ ] ~~Vista de categorías con tarta de gastos~~ (cubierto por la tarta del dashboard).
 - [ ] Filtros y búsqueda en histórico.
 - [ ] Edición masiva de gastos.
 - [x] Personalizar nombre de app, icono, colores (sustituir branding default de Blazor).

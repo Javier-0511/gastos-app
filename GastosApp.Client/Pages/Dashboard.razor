@@ -1,0 +1,383 @@
+@page "/dashboard"
+@using System.Globalization
+@using ApexCharts
+@using GastosApp.Client.Models
+@using GastosApp.Client.Services
+@inject AuthService Auth
+@inject AccountService Accounts
+@inject CategoryService CategorySvc
+@inject ExpenseService Expenses
+@inject NavigationManager Nav
+
+<PageTitle>Dashboard</PageTitle>
+
+@if (isLoading)
+{
+    <p>Cargando...</p>
+}
+else if (accounts.Count == 0)
+{
+    <p>No tienes cuentas. <a href="setup">Configura tus cuentas</a>.</p>
+}
+else
+{
+    <div class="container-narrow">
+        <h2 class="mb-3">Dashboard</h2>
+
+        @* Pestañas de cuenta *@
+        <ul class="nav nav-tabs mb-3">
+            @foreach (var acc in accounts)
+            {
+                <li class="nav-item">
+                    <button class="nav-link @(selectedAccountId == acc.Id ? "active" : "")"
+                            @onclick="() => SelectAccount(acc.Id)">
+                        @acc.Name
+                    </button>
+                </li>
+            }
+        </ul>
+
+        @* KPI: total mes actual + comparativa vs mes anterior *@
+        <div class="kpi-card mb-3">
+            <div class="kpi-label">Gastado este mes</div>
+            <div class="kpi-value">@FormatMoney(currentMonthTotal)</div>
+            <div class="kpi-diff @DiffClass">
+                @if (previousMonthTotal == 0m)
+                {
+                    <span>Sin datos del mes anterior</span>
+                }
+                else
+                {
+                    <span>@DiffArrow @FormatMoney(Math.Abs(currentMonthTotal - previousMonthTotal))</span>
+                    <span class="kpi-diff-extra">vs @FormatMoney(previousMonthTotal) en el mes anterior</span>
+                }
+            </div>
+        </div>
+
+        @* Evolución últimos 6 meses *@
+        <div class="chart-card mb-3">
+            <h6 class="chart-title">Evolución últimos 6 meses</h6>
+            @if (last6Months.All(m => m.Total == 0m))
+            {
+                <p class="text-muted small mb-0">No hay gastos en los últimos 6 meses.</p>
+            }
+            else
+            {
+                <ApexChart TItem="MonthBucket"
+                           @key="@($"evolution-{selectedAccountId}")"
+                           Options="evolutionOptions">
+                    <ApexPointSeries TItem="MonthBucket"
+                                     Items="last6Months"
+                                     Name="Gastado"
+                                     SeriesType="SeriesType.Bar"
+                                     XValue='m => m.Label'
+                                     YValue="m => m.Total" />
+                </ApexChart>
+            }
+        </div>
+
+        @* Tarta por categoría del mes actual *@
+        <div class="chart-card mb-3">
+            <h6 class="chart-title">Reparto por categoría — @MonthLabel</h6>
+            @if (categoryBreakdown.Count == 0)
+            {
+                <p class="text-muted small mb-0">No hay gastos este mes para repartir.</p>
+            }
+            else
+            {
+                <ApexChart TItem="CategoryBucket"
+                           @key="@($"pie-{selectedAccountId}")"
+                           Options="pieOptions">
+                    <ApexPointSeries TItem="CategoryBucket"
+                                     Items="categoryBreakdown"
+                                     Name="Gasto"
+                                     SeriesType="SeriesType.Donut"
+                                     XValue='c => c.Name'
+                                     YValue="c => c.Total" />
+                </ApexChart>
+            }
+        </div>
+    </div>
+}
+
+<style>
+    .container-narrow {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 16px;
+    }
+
+    .kpi-card {
+        background: linear-gradient(135deg, var(--surface-dark) 0%, var(--surface-deep) 100%);
+        border-radius: 16px;
+        padding: 22px 24px;
+        color: white;
+        box-shadow: 0 10px 30px rgba(30, 27, 75, 0.25);
+    }
+
+    .kpi-label {
+        font-size: 0.85rem;
+        opacity: 0.7;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .kpi-value {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-top: 4px;
+    }
+
+    .kpi-diff {
+        margin-top: 6px;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+
+    .kpi-diff.up   { color: #fca5a5; }   /* sube = peor */
+    .kpi-diff.down { color: #86efac; }   /* baja = mejor */
+    .kpi-diff.flat { color: rgba(255,255,255,0.7); }
+
+    .kpi-diff-extra {
+        display: block;
+        margin-top: 2px;
+        font-size: 0.8rem;
+        font-weight: 400;
+        opacity: 0.7;
+    }
+
+    .chart-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 12px;
+        padding: 16px 18px;
+    }
+
+    .chart-title {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6c757d;
+        margin: 0 0 8px;
+    }
+</style>
+
+@code {
+    private bool isLoading = true;
+
+    private List<Account> accounts = new();
+    private Dictionary<Guid, Category> categoryMap = new();
+
+    private Guid selectedAccountId;
+    private int currentYear;
+    private int currentMonth;
+
+    private decimal currentMonthTotal = 0m;
+    private decimal previousMonthTotal = 0m;
+
+    private List<MonthBucket> last6Months = new();
+    private List<CategoryBucket> categoryBreakdown = new();
+
+    private ApexChartOptions<MonthBucket> evolutionOptions = new()
+    {
+        Chart = new Chart
+        {
+            Toolbar = new Toolbar { Show = false },
+            FontFamily = "Helvetica Neue, Helvetica, Arial, sans-serif"
+        },
+        Colors = new List<string> { "#6366f1" },
+        PlotOptions = new PlotOptions
+        {
+            Bar = new PlotOptionsBar { BorderRadius = 6, ColumnWidth = "55%" }
+        },
+        DataLabels = new DataLabels { Enabled = false },
+        Grid = new Grid { BorderColor = "#e9ecef" },
+        Yaxis = new List<YAxis>
+        {
+            new YAxis { Labels = new YAxisLabels { Formatter = "function (v) { return v.toLocaleString('es-ES') + ' €'; }" } }
+        }
+    };
+
+    private ApexChartOptions<CategoryBucket> pieOptions = new()
+    {
+        Chart = new Chart
+        {
+            FontFamily = "Helvetica Neue, Helvetica, Arial, sans-serif"
+        },
+        Legend = new Legend { Position = LegendPosition.Bottom },
+        Colors = new List<string>
+        {
+            "#6366f1", "#8b5cf6", "#a855f7", "#ec4899",
+            "#f43f5e", "#f97316", "#eab308", "#10b981",
+            "#06b6d4", "#3b82f6"
+        },
+        DataLabels = new DataLabels
+        {
+            Enabled = true,
+            Formatter = "function (val) { return val.toFixed(0) + '%'; }"
+        }
+    };
+
+    // Cultura única para los labels de mes (evita repetir "new CultureInfo(...)").
+    private static readonly CultureInfo Es = new("es-ES");
+
+    private string MonthLabel
+    {
+        get
+        {
+            var date = new DateTime(currentYear, currentMonth, 1);
+            var raw = date.ToString("MMMM yyyy", Es);
+            return char.ToUpper(raw[0]) + raw[1..];
+        }
+    }
+
+    private string DiffArrow
+    {
+        get
+        {
+            if (currentMonthTotal > previousMonthTotal) return "↑";
+            if (currentMonthTotal < previousMonthTotal) return "↓";
+            return "•";
+        }
+    }
+
+    private string DiffClass
+    {
+        get
+        {
+            if (previousMonthTotal == 0) return "flat";
+            if (currentMonthTotal > previousMonthTotal) return "up";
+            if (currentMonthTotal < previousMonthTotal) return "down";
+            return "flat";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Auth.IsLoggedIn)
+        {
+            Nav.NavigateTo("login");
+            return;
+        }
+
+        var today = DateTime.Today;
+        currentYear = today.Year;
+        currentMonth = today.Month;
+
+        accounts = (await Accounts.GetMyAccountsAsync())
+            .OrderBy(a => a.IsShared)
+            .ToList();
+
+        if (accounts.Count == 0)
+        {
+            isLoading = false;
+            return;
+        }
+
+        selectedAccountId = accounts.First().Id;
+
+        await LoadCategories();
+        await LoadData();
+
+        isLoading = false;
+    }
+
+    private async Task LoadCategories()
+    {
+        categoryMap.Clear();
+        foreach (var acc in accounts)
+        {
+            var cats = await CategorySvc.GetByAccountAsync(acc.Id);
+            foreach (var c in cats)
+                categoryMap[c.Id] = c;
+        }
+    }
+
+    private async Task LoadData()
+    {
+        // Rango: 6 meses hacia atrás contando el actual.
+        var firstOfCurrentMonth = new DateTime(currentYear, currentMonth, 1);
+        var rangeStart = firstOfCurrentMonth.AddMonths(-5);
+        var rangeEnd = firstOfCurrentMonth.AddMonths(1);
+
+        // Una sola query para los 6 meses; filtramos en memoria.
+        var allExpenses = (await Expenses.GetByDateRangeAsync(rangeStart, rangeEnd))
+            .Where(e => e.AccountId == selectedAccountId)
+            .ToList();
+
+        // === Evolución últimos 6 meses ===
+        last6Months = new();
+        for (int i = 0; i < 6; i++)
+        {
+            var monthStart = rangeStart.AddMonths(i);
+            var monthEnd = monthStart.AddMonths(1);
+            var total = allExpenses
+                .Where(e => e.ExpenseDate >= monthStart && e.ExpenseDate < monthEnd)
+                .Sum(e => e.Amount);
+            last6Months.Add(new MonthBucket(monthStart, total));
+        }
+
+        // === KPI: mes actual y anterior ===
+        var prevMonthStart = firstOfCurrentMonth.AddMonths(-1);
+        currentMonthTotal = allExpenses
+            .Where(e => e.ExpenseDate >= firstOfCurrentMonth && e.ExpenseDate < rangeEnd)
+            .Sum(e => e.Amount);
+        previousMonthTotal = allExpenses
+            .Where(e => e.ExpenseDate >= prevMonthStart && e.ExpenseDate < firstOfCurrentMonth)
+            .Sum(e => e.Amount);
+
+        // === Tarta por categoría del mes actual ===
+        var currentMonthExpenses = allExpenses
+            .Where(e => e.ExpenseDate >= firstOfCurrentMonth && e.ExpenseDate < rangeEnd)
+            .ToList();
+
+        categoryBreakdown = currentMonthExpenses
+            .GroupBy(e => e.CategoryId)
+            .Select(g => new CategoryBucket(
+                CategoryName(g.Key),
+                g.Sum(e => e.Amount)))
+            .OrderByDescending(c => c.Total)
+            .ToList();
+    }
+
+    private string CategoryName(Guid id) =>
+        categoryMap.TryGetValue(id, out var c) ? c.Name : "(sin categoría)";
+
+    private async Task SelectAccount(Guid accountId)
+    {
+        if (accountId == selectedAccountId) return;
+
+        // Reseteamos los datos a vacíos y forzamos un render intermedio.
+        // Así ApexCharts se destruye con series vacías antes de recargar,
+        // evitando residuos visuales (etiquetas como "series-3" mezcladas
+        // entre el render anterior y el nuevo).
+        selectedAccountId = accountId;
+        last6Months = new();
+        categoryBreakdown = new();
+        currentMonthTotal = 0m;
+        previousMonthTotal = 0m;
+        StateHasChanged();
+        await Task.Yield();
+
+        await LoadData();
+    }
+
+    private static string FormatMoney(decimal amount) =>
+        amount.ToString("N2", Es) + " €";
+
+    /// <summary>DTO local para el gráfico de evolución mensual.</summary>
+    public record MonthBucket(DateTime Month, decimal Total)
+    {
+        public string Label
+        {
+            get
+            {
+                var raw = Month.ToString("MMM", Es);
+                return char.ToUpper(raw[0]) + raw[1..].TrimEnd('.');
+            }
+        }
+    }
+
+    /// <summary>DTO local para la tarta de categorías.</summary>
+    public record CategoryBucket(string Name, decimal Total);
+}

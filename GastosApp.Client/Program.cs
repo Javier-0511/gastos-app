@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using ApexCharts;
 using GastosApp.Client;
 using GastosApp.Client.Services;
 
@@ -16,6 +17,9 @@ builder.Services.AddSingleton<AccountService>();
 builder.Services.AddSingleton<CategoryService>();
 builder.Services.AddSingleton<ExpenseService>();
 builder.Services.AddSingleton<BudgetService>();
+
+// Blazor-ApexCharts
+builder.Services.AddApexCharts();
 var host = builder.Build();
 
 // Inicializamos la conexión de Supabase antes de arrancar

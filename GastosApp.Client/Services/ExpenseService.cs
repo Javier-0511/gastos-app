@@ -65,6 +65,22 @@ public class ExpenseService
         return response.Models;
     }
 
+    /// <summary>
+    /// Gastos de la cuenta entre dos fechas [from, to) (to exclusivo).
+    /// Útil para gráficos de histórico (varios meses) en el dashboard.
+    /// </summary>
+    public async Task<List<Expense>> GetByDateRangeAsync(DateTime from, DateTime to)
+    {
+        var response = await _supabase.Client
+            .From<Expense>()
+            .Where(e => e.ExpenseDate >= from.Date)
+            .Where(e => e.ExpenseDate < to.Date)
+            .Order(e => e.ExpenseDate, Constants.Ordering.Ascending)
+            .Get();
+
+        return response.Models;
+    }
+
     public async Task<Expense> UpdateAsync(
         Guid id,
         Guid accountId,
