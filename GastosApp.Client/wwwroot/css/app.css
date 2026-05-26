@@ -197,7 +197,9 @@ code {
 }
 
 /* Stagger: cuando varios elementos comparten contenedor con .stagger,
-   aparecen escalonados. Usable con :nth-child hasta 6. */
+   aparecen escalonados (cada uno con 60ms más de delay).
+   Más allá del 8º, todos comparten el delay del 8 para no eternizar
+   la cascada en pantallas con muchos elementos. */
 .stagger > * {
     animation: fade-in-up 0.35s ease-out both;
 }
@@ -207,6 +209,8 @@ code {
 .stagger > *:nth-child(4) { animation-delay: 0.18s; }
 .stagger > *:nth-child(5) { animation-delay: 0.24s; }
 .stagger > *:nth-child(6) { animation-delay: 0.30s; }
+.stagger > *:nth-child(7) { animation-delay: 0.36s; }
+.stagger > *:nth-child(n+8) { animation-delay: 0.42s; }
 
 /* Accesibilidad: si el usuario tiene preferencia de reducir animaciones
    (Sistema operativo → Accesibilidad), las desactivamos todas. */
