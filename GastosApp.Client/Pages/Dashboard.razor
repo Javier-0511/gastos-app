@@ -340,8 +340,8 @@ else
             .ToList();
     }
 
-    private string CategoryName(Guid id) =>
-        categoryMap.TryGetValue(id, out var c) ? c.Name : "(sin categoría)";
+    private string CategoryName(Guid? id) =>
+        id is Guid g && categoryMap.TryGetValue(g, out var c) ? c.Name : "(sin categoría)";
 
     private async Task SelectAccount(Guid accountId)
     {

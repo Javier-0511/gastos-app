@@ -169,7 +169,8 @@ Equivalente al H15/H16 del Excel.
 | Repo | Público | GitHub Pages free requiere público, sin secretos en el código |
 | Split común | Tabla `account_members` con `share_percent` | Permite añadir Marta sin migrar nada |
 | Categorías | Por cuenta, no globales | Permite que personal y compartida tengan tags distintos |
-| Bloques | Campo `block` enum en `categories` | Mismos 4 bloques del Excel + "individual" |
+| Bloques | Campo `block` enum en `categories`. Compartida: fijo/comida/variable/minicompra. Personal: fijo/ocio/variable/inversion (`individual` queda como legacy) | Estructura distinta por tipo de cuenta; definición central en `Models/Blocks.cs` |
+| Borrado de categorías | FK `expenses.category_id` con `ON DELETE RESTRICT` | No dejar borrar categorías con gastos (antes era SET NULL y dejaba gastos huérfanos) |
 | Routing | Rutas relativas (`NavigateTo("login")`) | Compatible con subdirectorio de GitHub Pages |
 | "Cuenta compartida" | = tarjeta bancaria conjunta, no compartición entre usuarios de la app | Yo gestiono ambas; la distinción real es "qué tarjeta pagó" |
 | Onboarding | Pantalla única, no wizard de 3 pasos | Más simple y rápido para algo que se hace una sola vez |
@@ -179,6 +180,19 @@ Equivalente al H15/H16 del Excel.
 ---
 
 ## Cambios y notas posteriores
+
+### 2026-05-25 — Bloques en la cuenta personal + fix de categorías huérfanas
+
+Añadidos bloques a la cuenta personal (antes solo `individual`): **Fijos / Ocio / Variable / Inversiones** (`fijo` y `variable` ya existían de la compartida; `ocio` e `inversion` nuevos). `individual` se mantiene en el `CHECK` como legacy para no romper categorías antiguas.
+
+- Definición de bloques centralizada en `Models/Blocks.cs` (antes duplicada en MonthView, NewExpense y Categories → se desincronizaba).
+- `/mes` muestra también bloques legacy presentes en los gastos para no ocultar nada durante la migración.
+- Al editar una categoría con bloque obsoleto, el formulario preselecciona un bloque válido para migrarla al guardar.
+
+**Incidente**: al borrar las categorías personales de prueba, los gastos asociados quedaron huérfanos (`category_id = null`) y la app petaba al deserializar (el modelo esperaba `Guid` no-null). Causa: la FK estaba como `ON DELETE SET NULL`. Arreglos:
+1. `Expense.CategoryId` ahora es `Guid?` (robustez: muestra "(sin categoría)" en vez de petar).
+2. FK cambiada a `ON DELETE RESTRICT`: la BBDD ya no deja borrar una categoría con gastos.
+3. Gastos huérfanos de prueba borrados con `DELETE ... WHERE category_id IS NULL`.
 
 ### 2026-05-24 — Cierre del día: saldo + dashboard + animaciones
 

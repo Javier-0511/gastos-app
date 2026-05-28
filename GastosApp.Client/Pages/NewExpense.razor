@@ -212,9 +212,6 @@ else
     private string description = "";
     private DateTime expenseDate = DateTime.Today;
 
-    private static readonly string[] SharedBlocks = { "fijo", "comida", "variable", "minicompra" };
-    private static readonly string[] PersonalBlocks = { "individual" };
-
     private List<Category> filteredCategories =>
         selectedBlock is null
             ? new List<Category>()
@@ -347,18 +344,10 @@ else
     private string[] BlocksForSelectedAccount()
     {
         var acc = accounts.FirstOrDefault(a => a.Id == selectedAccountId);
-        return acc?.IsShared == true ? SharedBlocks : PersonalBlocks;
+        return Blocks.For(acc?.IsShared == true);
     }
 
-    private static string BlockLabel(string block) => block switch
-    {
-        "fijo" => "Fijos",
-        "comida" => "Comida",
-        "variable" => "Variables",
-        "minicompra" => "Minicompras",
-        "individual" => "Individual",
-        _ => block
-    };
+    private static string BlockLabel(string block) => Blocks.Label(block);
 
     private async Task HandleSave()
     {

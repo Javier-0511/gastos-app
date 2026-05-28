@@ -159,7 +159,7 @@ else
         }
         else
         {
-            @foreach (var blockKey in BlocksForSelectedAccount())
+            @foreach (var blockKey in BlocksToShow())
             {
                 var blockExpenses = currentExpenses
                     .Where(e => CategoryOf(e.CategoryId)?.Block == blockKey)
@@ -441,9 +441,6 @@ else
     // Por ahora siempre 50%.
     private const decimal MyShareInShared = 0.5m;
 
-    private static readonly string[] SharedBlocks = { "fijo", "comida", "variable", "minicompra" };
-    private static readonly string[] PersonalBlocks = { "individual" };
-
     private string MonthLabel
     {
         get
@@ -590,11 +587,24 @@ else
             expandedBlocks.Remove(blockKey);
     }
 
-    private Category? CategoryOf(Guid categoryId) =>
-        categoryMap.TryGetValue(categoryId, out var c) ? c : null;
+    private Category? CategoryOf(Guid? categoryId) =>
+        categoryId is Guid id && categoryMap.TryGetValue(id, out var c) ? c : null;
 
-    private string[] BlocksForSelectedAccount() =>
-        IsCurrentAccountShared ? SharedBlocks : PersonalBlocks;
+    // Bloques estándar de la cuenta + cualquier bloque presente en los gastos
+    // del mes (p. ej. categorías legacy en 'individual' aún sin reasignar),
+    // para no ocultar ningún gasto. Ordenados.
+    private IEnumerable<string> BlocksToShow()
+    {
+        var present = currentExpenses
+            .Select(e => CategoryOf(e.CategoryId)?.Block)
+            .Where(b => b is not null)
+            .Cast<string>();
+
+        return Blocks.For(IsCurrentAccountShared)
+            .Concat(present)
+            .Distinct()
+            .OrderBy(Blocks.Order);
+    }
 
     private async Task HandleDelete(Expense exp)
     {
@@ -784,13 +794,5 @@ else
 
     private static string SinDefinir() => "—";
 
-    private static string BlockLabel(string block) => block switch
-    {
-        "fijo" => "Fijos",
-        "comida" => "Comida",
-        "variable" => "Variables",
-        "minicompra" => "Minicompras",
-        "individual" => "Individual",
-        _ => block
-    };
+    private static string BlockLabel(string block) => Blocks.Label(block);
 }

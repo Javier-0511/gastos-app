@@ -12,8 +12,11 @@ public class Expense : BaseModel
     [Column("account_id")]
     public Guid AccountId { get; set; }
 
+    // Nullable: si se borra la categoría asociada, la FK deja este campo a
+    // null (gasto "huérfano"). El cliente Supabase requiere que el tipo lo
+    // admita para no fallar al deserializar.
     [Column("category_id")]
-    public Guid CategoryId { get; set; }
+    public Guid? CategoryId { get; set; }
 
     [Column("paid_by")]
     public Guid PaidBy { get; set; }

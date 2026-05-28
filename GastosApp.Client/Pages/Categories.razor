@@ -127,13 +127,6 @@ else
     private string formName = "";
     private string formBlock = "";
 
-    // Bloques válidos según el tipo de cuenta.
-    // En cuenta compartida: fijo, comida, variable, minicompra.
-    // En cuenta personal: individual.
-    // El CHECK de la BBDD valida igualmente, esto solo restringe la UI.
-    private static readonly string[] SharedBlocks = { "fijo", "comida", "variable", "minicompra" };
-    private static readonly string[] PersonalBlocks = { "individual" };
-
     protected override async Task OnInitializedAsync()
     {
         if (!Auth.IsLoggedIn)
@@ -189,7 +182,13 @@ else
     {
         editingId = cat.Id;
         formName = cat.Name;
-        formBlock = cat.Block;
+
+        // Si el bloque de la categoría ya no es un bloque ofrecido para esta
+        // cuenta (p. ej. 'individual' legacy en personal), preseleccionamos el
+        // primer bloque válido para que al guardar quede migrada.
+        var valid = BlocksFor(selectedAccountId);
+        formBlock = valid.Contains(cat.Block) ? cat.Block : valid.First();
+
         showForm = true;
         errorMessage = "";
     }
@@ -252,26 +251,10 @@ else
     private string[] BlocksFor(Guid accountId)
     {
         var acc = accounts.FirstOrDefault(a => a.Id == accountId);
-        return acc?.IsShared == true ? SharedBlocks : PersonalBlocks;
+        return Blocks.For(acc?.IsShared == true);
     }
 
-    private static string BlockLabel(string block) => block switch
-    {
-        "fijo" => "Fijos",
-        "comida" => "Comida",
-        "variable" => "Variables",
-        "minicompra" => "Minicompras",
-        "individual" => "Individual",
-        _ => block
-    };
+    private static string BlockLabel(string block) => Blocks.Label(block);
 
-    private static int BlockOrder(string block) => block switch
-    {
-        "fijo" => 1,
-        "comida" => 2,
-        "variable" => 3,
-        "minicompra" => 4,
-        "individual" => 5,
-        _ => 99
-    };
+    private static int BlockOrder(string block) => Blocks.Order(block);
 }
