@@ -179,6 +179,40 @@ Equivalente al H15/H16 del Excel.
 
 ---
 
+## Backlog técnico — Auditoría QA (2026-05-25)
+
+Auditoría completa solo-lectura. Valoración global: app bien construida, sin nada crítico. `decimal` usado en todo el dinero, RLS bien diseñada, sin XSS ni inyección SQL posibles, build sin warnings. Pendientes ordenados por gravedad:
+
+### 🔴 Crítico
+Ninguno. (Mayor exposición teórica: toda la seguridad depende de RLS — pero las policies están bien escritas.)
+
+### 🟠 Alto
+- **A1 — Setup no atómico** (`Setup.razor:67-68` + `Home.razor`): crea las 2 cuentas en llamadas separadas sin transacción. Si la 2ª falla, quedas con 1 cuenta y Home solo redirige a `/setup` si `count == 0` → te quedas sin cuenta compartida y sin forma de crearla. Fix: redirigir si `count < 2` o setup idempotente / RPC transaccional.
+- **A2 — Tests = 0%** sobre lógica financiera (`SaldoFinal`, `AporteACompartida`, `CalcularSaldoFinalMesAnterior`, agregaciones Dashboard). Viven en `.razor` acoplados a Supabase, no testeables. Fix: extraer cálculos a clase pura + proyecto xUnit.
+- **A3 — Autorización por-gasto en compartida** (`policies.sql`, UPDATE/DELETE de `expenses`): cualquier miembro puede editar/borrar gastos de otro y cambiar `paid_by` (el `WITH CHECK` del UPDATE no lo revalida). Impacto nulo hoy (1 usuario), Alto cuando entre Marta. Fix: decidir regla de negocio antes de Fase 4.
+
+### 🟡 Medio
+- **M1 — Race condition** en `BudgetService.UpsertFieldsAsync` (leer→insert/update). La UNIQUE evita duplicado pero la 2ª op falla. Fix: upsert nativo con conflict target.
+- **M2 — Arrastre de saldo se rompe con meses con hueco** (`MonthView.CalcularSaldoFinalMesAnterior`): solo mira el mes inmediatamente anterior. Fix: retroceder al último mes con `opening_balance`.
+- **M3 — Validación incompleta** (`NewExpense`, modales de `MonthView`): importe solo valida `>0` (sin tope ni control de decimales, acepta 0,001); nómina/aporte permiten negativos; nombre de categoría duplicado da error técnico. Fix: redondear a 2 decimales, validar `>=0`, pre-comprobar duplicados.
+- **M4 — Errores técnicos crudos al usuario**: varios `catch (Exception ex)` muestran `ex.Message` (Categories, NewExpense, MonthView:623, Setup:73). Fix: mensajes amables + detalle solo en consola.
+- **M5 — `GetByMonthAsync` con `&&`** (`ExpenseService`): funciona con 2 condiciones pero es el patrón que rompe con 3+ (PGRST100). Fix: encadenar `.Where().Where()`.
+- **M6 — Modal con `await` colgado** (`ConfirmModal.ShowAsync`): si se navega con el modal abierto, el `TaskCompletionSource` nunca se completa. Fix: completar con `false` en `Dispose()`.
+
+### 🟢 Bajo
+- **B1 — Duplicación**: `FormatMoney` (MonthView + Dashboard), CSS de modal (ConfirmModal + MonthView), pestañas de cuenta (4 páginas), `new CultureInfo("es-ES")` repetido. Fix: centralizar en helpers/componentes (como `Blocks.cs`).
+- **B2 — N+1** en `LoadAllCategories` (query por cuenta en bucle). Fix: una query y agrupar en memoria (RLS ya limita).
+- **B3 — `filteredCategories`** (`NewExpense`) recalcula `Where().ToList()` en cada acceso. Fix: cachear.
+- **B4 — Edge cases**: gastos con fecha futura y sub-céntimos permitidos.
+- **B5 — `.claude/` sin ignorar** en `.gitignore` (aparece untracked en cada commit).
+
+### ✅ Verificado correcto
+`decimal` en todo el dinero · sin XSS (ningún `MarkupString`) · sin inyección SQL (PostgREST parametriza) · RLS coherente sin recursión · AnonKey pública es el modelo correcto de Supabase · `bin/obj/.vs` correctamente ignorados · build sin warnings.
+
+**Orden sugerido de ataque:** A1 + M5 (rápidos, evitan sustos) → M3/M4 (validación y UX de errores) → A2 (tests) como inversión de blindaje.
+
+---
+
 ## Cambios y notas posteriores
 
 ### 2026-05-25 — Bloques en la cuenta personal + fix de categorías huérfanas
