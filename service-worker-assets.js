@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "5PR4yBoR",
+  "version": "N2oOAVrl",
   "assets": [
     {
       "hash": "sha256-K8Nxatbbe+Vth29RgKhgu62Gnf7hgrnY4ifacCSDOuA=",
@@ -198,8 +198,8 @@ self.assetsManifest = {
       "url": "_framework/Blazor-ApexCharts.xli09jm79l.wasm"
     },
     {
-      "hash": "sha256-V23B2Tmieeiu39QvV4nrnVQ/fyrpu5WJveNV+hLZmIU=",
-      "url": "_framework/GastosApp.Client.55zja09ae7.wasm"
+      "hash": "sha256-ZwSJWoycDfAII+WRtU4Qbelenb/9xqMcVopC5SCvsCQ=",
+      "url": "_framework/GastosApp.Client.fei9fo7su7.wasm"
     },
     {
       "hash": "sha256-nzUhTDC0UkiTVPNwQNQ14yv8bXbxdm3f9NA1O/98k90=",
@@ -574,16 +574,16 @@ self.assetsManifest = {
       "url": "_framework/blazor.webassembly.958z1vx7fr.js"
     },
     {
+      "hash": "sha256-vEZaFB14ykJBwBu9pz3Bv3SbbkgYAHk/KDPpsP5hYOk=",
+      "url": "_framework/dotnet.gn74jxj0jo.js"
+    },
+    {
       "hash": "sha256-i4MH1ttKidpkFY/9i4kRe+7ux5JQMZds+qXuSkJqeog=",
       "url": "_framework/dotnet.native.f749u69f30.wasm"
     },
     {
       "hash": "sha256-95bE510j3EADMNW2OKa/DMBhu8N632dl5HGeBfXNEf4=",
       "url": "_framework/dotnet.native.rjbmzc4jpg.js"
-    },
-    {
-      "hash": "sha256-RJVQVMTPw0Ez5G+sqHyp+K/IYYiEJLngPN7JatpHAkg=",
-      "url": "_framework/dotnet.ob6hvj3260.js"
     },
     {
       "hash": "sha256-YyudibIWETMKrLb+nAZdJ+xDY7HY6BWf6s32UAdcvCU=",
@@ -618,7 +618,7 @@ self.assetsManifest = {
       "url": "icon.svg"
     },
     {
-      "hash": "sha256-ybx/+W2zEz1xDTkoOYYLms5rjnUqAeLBOJrFR3rfyJc=",
+      "hash": "sha256-FgSuEhw0oMlTCFmYqehSSr45B2P82C4N1b44j6oCwk0=",
       "url": "index.html"
     },
     {
