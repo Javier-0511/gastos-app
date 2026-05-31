@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "GmQLXYxu",
+  "version": "+06wiO7/",
   "assets": [
     {
       "hash": "sha256-K8Nxatbbe+Vth29RgKhgu62Gnf7hgrnY4ifacCSDOuA=",
@@ -198,8 +198,12 @@ self.assetsManifest = {
       "url": "_framework/Blazor-ApexCharts.xli09jm79l.wasm"
     },
     {
-      "hash": "sha256-jsqQeQKPte+dFMyIMfGC+nu6Vd2HyIDZY1hIM/zLViI=",
-      "url": "_framework/GastosApp.Client.edxai3zs89.wasm"
+      "hash": "sha256-YMx7NVqPaK4mUKGUMjCBYZP0fv29YziZWfOyU5LnVcY=",
+      "url": "_framework/GastosApp.Client.wgw8m0i695.wasm"
+    },
+    {
+      "hash": "sha256-nzUhTDC0UkiTVPNwQNQ14yv8bXbxdm3f9NA1O/98k90=",
+      "url": "_framework/Microsoft.AspNetCore.Components.9mgh0bhxb3.wasm"
     },
     {
       "hash": "sha256-8Z8rMiY/kHW87tg9+DLDvGPD4SJczGDEI89zQ5ZF+nw=",
@@ -208,10 +212,6 @@ self.assetsManifest = {
     {
       "hash": "sha256-5Ax9zaUk163jqRiEcLYhSuAZy5RgWVpsfkZ5TuhS3rU=",
       "url": "_framework/Microsoft.AspNetCore.Components.WebAssembly.gffojnuoo5.wasm"
-    },
-    {
-      "hash": "sha256-JnyTVK0Db+2B6j8dM95LLHnTYmgowGKw/PXmeEKqFmk=",
-      "url": "_framework/Microsoft.AspNetCore.Components.q47jhq0qk0.wasm"
     },
     {
       "hash": "sha256-wZJRhndrqNa/k0qyuwqLV09INhv6F9TU/skkCshYilc=",
@@ -574,10 +574,6 @@ self.assetsManifest = {
       "url": "_framework/blazor.webassembly.958z1vx7fr.js"
     },
     {
-      "hash": "sha256-HgHhYhGUPRqIk2dtnwutd1CrgoVHRYHX5bG9oBagFS0=",
-      "url": "_framework/dotnet.67a11ls5kl.js"
-    },
-    {
       "hash": "sha256-i4MH1ttKidpkFY/9i4kRe+7ux5JQMZds+qXuSkJqeog=",
       "url": "_framework/dotnet.native.f749u69f30.wasm"
     },
@@ -588,6 +584,10 @@ self.assetsManifest = {
     {
       "hash": "sha256-YyudibIWETMKrLb+nAZdJ+xDY7HY6BWf6s32UAdcvCU=",
       "url": "_framework/dotnet.runtime.r2kbxkuujc.js"
+    },
+    {
+      "hash": "sha256-F/dn0vi7H94QAjtuG0HIVUpMg3ihg4x83P5AeQWTv+w=",
+      "url": "_framework/dotnet.rzho2dn26z.js"
     },
     {
       "hash": "sha256-SZLtQnRc0JkwqHab0VUVP7T3uBPSeYzxzDnpxPpUnHk=",
@@ -610,7 +610,7 @@ self.assetsManifest = {
       "url": "appsettings.json"
     },
     {
-      "hash": "sha256-MdIQpnEQrj7d0EyEdo0dtmapJKyDCnWgwFfW/HbX6sM=",
+      "hash": "sha256-7iChhpqMur1EQcuV7ZkiqcpiXGKqiBB4aDWAcu3QPYQ=",
       "url": "css/app.css"
     },
     {
@@ -618,7 +618,7 @@ self.assetsManifest = {
       "url": "icon.svg"
     },
     {
-      "hash": "sha256-jY0nA8wAhPCNQeN3JSYkGgzFKzqmEFMjoi74yrW7mIE=",
+      "hash": "sha256-5QoZy5/ymDoa7clU2Yt4AwO9kaCvi4jkOYZ/9+fwHj4=",
       "url": "index.html"
     },
     {
