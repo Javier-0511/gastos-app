@@ -215,6 +215,17 @@ Ninguno. (Mayor exposición teóricacorrige: toda la seguridad depende de RLS �
 
 ## Cambios y notas posteriores
 
+### 2026-05-31 — Registro de usuarios en la pantalla de login
+
+La pantalla de login solo permitía iniciar sesión; no había forma de crear una cuenta nueva. Añadido el registro reutilizando la misma pantalla con un toggle (decisión: un solo `Login.razor` con modo, no una página `/registro` aparte → menos código y cero duplicación de formulario).
+
+- `AuthService.SignUpAsync(email, password)` → llama a `Auth.SignUp` de Supabase.
+- `Login.razor` con campo `isRegisterMode`: cabecera, botón, `autocomplete` y enlace inferior cambian según el modo ("¿No tienes cuenta? Regístrate" ↔ "¿Ya tienes cuenta? Inicia sesión").
+- **Registro adaptativo a la confirmación de email**: si Supabase devuelve sesión (confirm email OFF) → redirige a `/setup`; si no (confirm email ON) → muestra "✓ Revisa tu correo..." y vuelve a modo login. No depende de saber el ajuste del panel de antemano.
+- Validación: contraseña ≥ 6 caracteres antes de llamar a Supabase.
+
+**Arreglo de paso (M4 en login)**: el manejo de errores estaba roto. El `else` con el mensaje amable casi nunca saltaba porque el cliente Supabase **lanza excepción** en credenciales malas (no devuelve `null`), así que siempre se caía al `catch` mostrando `Error: {mensaje técnico en inglés}`. Ahora ambos flujos muestran mensaje amable en español y el detalle técnico va a `Console.Error`.
+
 ### 2026-05-25 — Fix de zona horaria en fechas de gasto
 
 Bug detectado por Javi: al guardar un gasto con fecha "1 junio" se contabilizaba en mayo. Causa: `<input type="date">` produce un `DateTime` con `Kind=Unspecified` (medianoche local), y el cliente Supabase lo serializa a UTC, restándole horas (CEST = UTC+2) y desplazando el día al anterior. Postgres entonces lo guardaba como 31 mayo en la columna `date`.

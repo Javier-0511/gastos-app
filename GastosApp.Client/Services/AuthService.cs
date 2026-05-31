@@ -28,6 +28,11 @@ public class AuthService
         return await _supabase.Client.Auth.SignIn(email, password);
     }
 
+    public async Task<Session?> SignUpAsync(string email, string password)
+    {
+        return await _supabase.Client.Auth.SignUp(email, password);
+    }
+
     public async Task SignOutAsync()
     {
         await _supabase.Client.Auth.SignOut();

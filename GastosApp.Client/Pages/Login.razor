@@ -7,11 +7,13 @@
 <PageTitle>Iniciar sesión</PageTitle>
 
 <div class="login-screen">
-    <form class="login-card" @onsubmit="HandleLogin" @onsubmit:preventDefault="true">
+    <form class="login-card" @onsubmit="HandleSubmit" @onsubmit:preventDefault="true">
         <div class="login-header">
             <img src="icon.svg" alt="Gastos" class="login-logo" />
             <h1 class="login-title">Gastos</h1>
-            <p class="login-subtitle">Inicia sesión para continuar</p>
+            <p class="login-subtitle">
+                @(isRegisterMode ? "Crea tu cuenta para empezar" : "Inicia sesión para continuar")
+            </p>
         </div>
 
         <div class="mb-3">
@@ -29,7 +31,7 @@
             <input type="password"
                    class="form-control form-control-lg"
                    placeholder="••••••••"
-                   autocomplete="current-password"
+                   autocomplete="@(isRegisterMode ? "new-password" : "current-password")"
                    @bind="password"
                    @bind:event="oninput" />
         </div>
@@ -39,18 +41,36 @@
             <div class="alert alert-danger small">@errorMessage</div>
         }
 
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert alert-success small">@successMessage</div>
+        }
+
         <button type="submit"
                 class="btn btn-primary btn-lg w-100 mt-2"
                 disabled="@(isLoading || !IsValid)">
             @if (isLoading)
             {
-                <span>Entrando...</span>
+                <span>@(isRegisterMode ? "Creando cuenta..." : "Entrando...")</span>
             }
             else
             {
-                <span>Entrar</span>
+                <span>@(isRegisterMode ? "Crear cuenta" : "Entrar")</span>
             }
         </button>
+
+        <p class="login-toggle">
+            @if (isRegisterMode)
+            {
+                <span>¿Ya tienes cuenta?</span>
+                <button type="button" class="login-toggle-link" @onclick="ToggleMode">Inicia sesión</button>
+            }
+            else
+            {
+                <span>¿No tienes cuenta?</span>
+                <button type="button" class="login-toggle-link" @onclick="ToggleMode">Regístrate</button>
+            }
+        </p>
     </form>
 </div>
 
@@ -99,39 +119,116 @@
         margin: 4px 0 0;
         font-size: 0.95rem;
     }
+
+    .login-toggle {
+        text-align: center;
+        margin: 18px 0 0;
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .login-toggle-link {
+        background: none;
+        border: none;
+        padding: 0 0 0 4px;
+        color: var(--accent);
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .login-toggle-link:hover {
+        text-decoration: underline;
+    }
 </style>
 
 @code {
     private string email = "";
     private string password = "";
     private string errorMessage = "";
+    private string successMessage = "";
     private bool isLoading = false;
+    private bool isRegisterMode = false;
 
     private bool IsValid =>
         !string.IsNullOrWhiteSpace(email) && !string.IsNullOrWhiteSpace(password);
+
+    // Alterna entre "iniciar sesión" y "crear cuenta", limpiando los mensajes previos.
+    private void ToggleMode()
+    {
+        isRegisterMode = !isRegisterMode;
+        errorMessage = "";
+        successMessage = "";
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (isRegisterMode)
+            await HandleRegister();
+        else
+            await HandleLogin();
+    }
 
     private async Task HandleLogin()
     {
         if (!IsValid) return;
 
         errorMessage = "";
+        successMessage = "";
         isLoading = true;
 
         try
         {
-            var session = await Auth.SignInAsync(email, password);
-            if (session is not null)
+            await Auth.SignInAsync(email, password);
+            // SignIn lanza excepción si las credenciales son malas; si llega aquí, hay sesión.
+            Nav.NavigateTo("");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "No se pudo iniciar sesión. Comprueba el email y la contraseña.";
+            Console.Error.WriteLine($"[Login] SignIn falló: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleRegister()
+    {
+        if (!IsValid) return;
+
+        if (password.Length < 6)
+        {
+            errorMessage = "La contraseña debe tener al menos 6 caracteres.";
+            return;
+        }
+
+        errorMessage = "";
+        successMessage = "";
+        isLoading = true;
+
+        try
+        {
+            await Auth.SignUpAsync(email, password);
+
+            // Si la confirmación por email está desactivada, Supabase ya nos deja
+            // logueados → vamos directo al setup de cuentas. Si está activada, no hay
+            // sesión todavía y mostramos el aviso de revisar el correo.
+            if (Auth.IsLoggedIn)
             {
                 Nav.NavigateTo("");
             }
             else
             {
-                errorMessage = "No se pudo iniciar sesión. Comprueba el email y la contraseña.";
+                successMessage = "✓ Cuenta creada. Revisa tu correo para confirmarla y luego inicia sesión.";
+                isRegisterMode = false;
+                password = "";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error: {ex.Message}";
+            errorMessage = "No se pudo crear la cuenta. ¿Quizá ya existe ese email?";
+            Console.Error.WriteLine($"[Login] SignUp falló: {ex.Message}");
         }
         finally
         {
