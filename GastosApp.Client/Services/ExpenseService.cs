@@ -14,6 +14,13 @@ public class ExpenseService
         _auth = auth;
     }
 
+    // Normaliza un DateTime a "fecha de calendario en UTC" para evitar que
+    // el cliente Supabase aplique conversión de TZ y desplace el día. El
+    // <input type="date"> devuelve fechas como medianoche local (Kind=Unspecified),
+    // que al serializar a UTC restan/suman horas y pueden cambiar el día.
+    private static DateTime AsUtcDate(DateTime d) =>
+        DateTime.SpecifyKind(d.Date, DateTimeKind.Utc);
+
     public async Task<Expense> CreateAsync(
         Guid accountId,
         Guid categoryId,
@@ -32,7 +39,7 @@ public class ExpenseService
             PaidBy = userId,
             Description = description,
             Amount = amount,
-            ExpenseDate = expenseDate.Date
+            ExpenseDate = AsUtcDate(expenseDate)
         };
 
         var response = await _supabase.Client.From<Expense>().Insert(newExpense);
@@ -53,8 +60,8 @@ public class ExpenseService
     {
         // Rango [primer día del mes, primer día del mes siguiente).
         // Postgres compara `date` con literales tipo 'YYYY-MM-DD'.
-        var from = new DateTime(year, month, 1);
-        var to = from.AddMonths(1);
+        var from = AsUtcDate(new DateTime(year, month, 1));
+        var to = AsUtcDate(from.AddMonths(1));
 
         var response = await _supabase.Client
             .From<Expense>()
@@ -71,10 +78,13 @@ public class ExpenseService
     /// </summary>
     public async Task<List<Expense>> GetByDateRangeAsync(DateTime from, DateTime to)
     {
+        var fromUtc = AsUtcDate(from);
+        var toUtc = AsUtcDate(to);
+
         var response = await _supabase.Client
             .From<Expense>()
-            .Where(e => e.ExpenseDate >= from.Date)
-            .Where(e => e.ExpenseDate < to.Date)
+            .Where(e => e.ExpenseDate >= fromUtc)
+            .Where(e => e.ExpenseDate < toUtc)
             .Order(e => e.ExpenseDate, Constants.Ordering.Ascending)
             .Get();
 
@@ -101,7 +111,7 @@ public class ExpenseService
         existing.CategoryId = categoryId;
         existing.Description = description;
         existing.Amount = amount;
-        existing.ExpenseDate = expenseDate.Date;
+        existing.ExpenseDate = AsUtcDate(expenseDate);
 
         var response = await existing.Update<Expense>();
         return response.Models.First();

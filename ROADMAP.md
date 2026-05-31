@@ -215,6 +215,12 @@ Ninguno. (Mayor exposición teórica: toda la seguridad depende de RLS — pero 
 
 ## Cambios y notas posteriores
 
+### 2026-05-25 — Fix de zona horaria en fechas de gasto
+
+Bug detectado por Javi: al guardar un gasto con fecha "1 junio" se contabilizaba en mayo. Causa: `<input type="date">` produce un `DateTime` con `Kind=Unspecified` (medianoche local), y el cliente Supabase lo serializa a UTC, restándole horas (CEST = UTC+2) y desplazando el día al anterior. Postgres entonces lo guardaba como 31 mayo en la columna `date`.
+
+Fix en `ExpenseService`: nuevo helper `AsUtcDate(d) => DateTime.SpecifyKind(d.Date, DateTimeKind.Utc)` aplicado en Create, Update, GetByMonth y GetByDateRange. Le dice al cliente "esta fecha ya es UTC, no la conviertas". Los gastos nuevos quedan en la fecha correcta; los anteriores ya mal guardados habrá que editarlos manualmente.
+
 ### 2026-05-25 — Bloques en la cuenta personal + fix de categorías huérfanas
 
 Añadidos bloques a la cuenta personal (antes solo `individual`): **Fijos / Ocio / Variable / Inversiones** (`fijo` y `variable` ya existían de la compartida; `ocio` e `inversion` nuevos). `individual` se mantiene en el `CHECK` como legacy para no romper categorías antiguas.
