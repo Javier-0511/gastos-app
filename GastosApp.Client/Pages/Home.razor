@@ -240,7 +240,7 @@ else
         }
 
         var accounts = await Accounts.GetMyAccountsAsync();
-        if (accounts.Count == 0)
+        if (accounts.Count < 2)
         {
             Nav.NavigateTo("setup");
             return;

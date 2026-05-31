@@ -184,10 +184,10 @@ Equivalente al H15/H16 del Excel.
 Auditoría completa solo-lectura. Valoración global: app bien construida, sin nada crítico. `decimal` usado en todo el dinero, RLS bien diseñada, sin XSS ni inyección SQL posibles, build sin warnings. Pendientes ordenados por gravedad:
 
 ### 🔴 Crítico
-Ninguno. (Mayor exposición teórica: toda la seguridad depende de RLS — pero las policies están bien escritas.)
+Ninguno. (Mayor exposición teóricacorrige: toda la seguridad depende de RLS — pero las policies están bien escritas.)
 
 ### 🟠 Alto
-- **A1 — Setup no atómico** (`Setup.razor:67-68` + `Home.razor`): crea las 2 cuentas en llamadas separadas sin transacción. Si la 2ª falla, quedas con 1 cuenta y Home solo redirige a `/setup` si `count == 0` → te quedas sin cuenta compartida y sin forma de crearla. Fix: redirigir si `count < 2` o setup idempotente / RPC transaccional.
+- ~~**A1 — Setup no atómico**~~ ✅ *(2026-05-31: `Home` redirige a setup si `count < 2`; `Setup` carga cuentas existentes al init y solo crea las que faltan — idempotente.)*
 - **A2 — Tests = 0%** sobre lógica financiera (`SaldoFinal`, `AporteACompartida`, `CalcularSaldoFinalMesAnterior`, agregaciones Dashboard). Viven en `.razor` acoplados a Supabase, no testeables. Fix: extraer cálculos a clase pura + proyecto xUnit.
 - **A3 — Autorización por-gasto en compartida** (`policies.sql`, UPDATE/DELETE de `expenses`): cualquier miembro puede editar/borrar gastos de otro y cambiar `paid_by` (el `WITH CHECK` del UPDATE no lo revalida). Impacto nulo hoy (1 usuario), Alto cuando entre Marta. Fix: decidir regla de negocio antes de Fase 4.
 

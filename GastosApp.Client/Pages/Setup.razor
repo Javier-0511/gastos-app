@@ -7,54 +7,76 @@
 <PageTitle>Configuración inicial</PageTitle>
 
 <div class="container stagger" style="max-width: 500px; margin-top: 60px;">
-    <h2>¡Bienvenido!</h2>
-    <p>Vamos a crear tus dos cuentas para empezar. Puedes cambiar los nombres si quieres.</p>
-
-    <div class="mb-3">
-        <label class="form-label">Cuenta personal</label>
-        <input class="form-control" @bind="personalName" @bind:event="oninput" />
-        <small class="text-muted">Para gastos que pagas con tu tarjeta personal.</small>
-    </div>
-
-    <div class="mb-3">
-        <label class="form-label">Cuenta compartida</label>
-        <input class="form-control" @bind="sharedName" @bind:event="oninput" />
-        <small class="text-muted">Para gastos pagados con la tarjeta compartida (50/50 con Marta).</small>
-    </div>
-
-    @if (!string.IsNullOrEmpty(errorMessage))
+    @if (isLoading)
     {
-        <div class="alert alert-danger">@errorMessage</div>
+        <p>Cargando...</p>
     }
+    else
+    {
+        <h2>¡Bienvenido!</h2>
+        <p>Vamos a crear tus dos cuentas para empezar. Puedes cambiar los nombres si quieres.</p>
 
-    <button class="btn btn-primary w-100" @onclick="HandleCreate" disabled="@(isLoading || !IsValid)">
-        @if (isLoading)
+        @if (!hasPersonal)
         {
-            <span>Creando...</span>
+            <div class="mb-3">
+                <label class="form-label">Cuenta personal</label>
+                <input class="form-control" @bind="personalName" @bind:event="oninput" />
+                <small class="text-muted">Para gastos que pagas con tu tarjeta personal.</small>
+            </div>
         }
-        else
+
+        @if (!hasShared)
         {
-            <span>Crear mis cuentas</span>
+            <div class="mb-3">
+                <label class="form-label">Cuenta compartida</label>
+                <input class="form-control" @bind="sharedName" @bind:event="oninput" />
+                <small class="text-muted">Para gastos pagados con la tarjeta compartida (50/50 con Marta).</small>
+            </div>
         }
-    </button>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <button class="btn btn-primary w-100" @onclick="HandleCreate" disabled="@(!IsValid)">
+            Crear mis cuentas
+        </button>
+    }
 </div>
 
 @code {
     private string personalName = "Personal";
     private string sharedName = "Compartida";
     private string errorMessage = "";
-    private bool isLoading = false;
+    private bool isLoading = true;
+
+    private bool hasPersonal = false;
+    private bool hasShared = false;
 
     private bool IsValid =>
-        !string.IsNullOrWhiteSpace(personalName) &&
-        !string.IsNullOrWhiteSpace(sharedName);
+        (hasPersonal || !string.IsNullOrWhiteSpace(personalName)) &&
+        (hasShared   || !string.IsNullOrWhiteSpace(sharedName));
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (!Auth.IsLoggedIn)
         {
             Nav.NavigateTo("login");
+            return;
         }
+
+        var existing = await Accounts.GetMyAccountsAsync();
+        if (existing.Count >= 2)
+        {
+            Nav.NavigateTo("");
+            return;
+        }
+
+        hasPersonal = existing.Any(a => !a.IsShared);
+        hasShared = existing.Any(a => a.IsShared);
+
+        isLoading = false;
     }
 
     private async Task HandleCreate()
@@ -64,16 +86,15 @@
 
         try
         {
-            await Accounts.CreateAccountAsync(personalName.Trim(), isShared: false);
-            await Accounts.CreateAccountAsync(sharedName.Trim(), isShared: true);
+            if (!hasPersonal)
+                await Accounts.CreateAccountAsync(personalName.Trim(), isShared: false);
+            if (!hasShared)
+                await Accounts.CreateAccountAsync(sharedName.Trim(), isShared: true);
             Nav.NavigateTo("");
         }
         catch (Exception ex)
         {
             errorMessage = $"Error al crear las cuentas: {ex.Message}";
-        }
-        finally
-        {
             isLoading = false;
         }
     }
