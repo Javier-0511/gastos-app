@@ -1,5 +1,5 @@
 self.assetsManifest = {
-  "version": "+06wiO7/",
+  "version": "5PR4yBoR",
   "assets": [
     {
       "hash": "sha256-K8Nxatbbe+Vth29RgKhgu62Gnf7hgrnY4ifacCSDOuA=",
@@ -198,8 +198,8 @@ self.assetsManifest = {
       "url": "_framework/Blazor-ApexCharts.xli09jm79l.wasm"
     },
     {
-      "hash": "sha256-YMx7NVqPaK4mUKGUMjCBYZP0fv29YziZWfOyU5LnVcY=",
-      "url": "_framework/GastosApp.Client.wgw8m0i695.wasm"
+      "hash": "sha256-V23B2Tmieeiu39QvV4nrnVQ/fyrpu5WJveNV+hLZmIU=",
+      "url": "_framework/GastosApp.Client.55zja09ae7.wasm"
     },
     {
       "hash": "sha256-nzUhTDC0UkiTVPNwQNQ14yv8bXbxdm3f9NA1O/98k90=",
@@ -454,8 +454,8 @@ self.assetsManifest = {
       "url": "_framework/System.ObjectModel.ete8oqbmu5.wasm"
     },
     {
-      "hash": "sha256-zcy0O63Ydy98O/Nn2dHJiamVUjbhy28bvstGvRp2wGQ=",
-      "url": "_framework/System.Private.CoreLib.dg0iubhoku.wasm"
+      "hash": "sha256-WgS42d4vizZ1x7RbDKKJMFBd6j+UurPx9Bkv558DCs0=",
+      "url": "_framework/System.Private.CoreLib.6xjq9156jk.wasm"
     },
     {
       "hash": "sha256-78XvKu/k1z1Oh38rjYB9zVoJ6FtgsL/MRKA+6vo4jSA=",
@@ -582,12 +582,12 @@ self.assetsManifest = {
       "url": "_framework/dotnet.native.rjbmzc4jpg.js"
     },
     {
-      "hash": "sha256-YyudibIWETMKrLb+nAZdJ+xDY7HY6BWf6s32UAdcvCU=",
-      "url": "_framework/dotnet.runtime.r2kbxkuujc.js"
+      "hash": "sha256-RJVQVMTPw0Ez5G+sqHyp+K/IYYiEJLngPN7JatpHAkg=",
+      "url": "_framework/dotnet.ob6hvj3260.js"
     },
     {
-      "hash": "sha256-F/dn0vi7H94QAjtuG0HIVUpMg3ihg4x83P5AeQWTv+w=",
-      "url": "_framework/dotnet.rzho2dn26z.js"
+      "hash": "sha256-YyudibIWETMKrLb+nAZdJ+xDY7HY6BWf6s32UAdcvCU=",
+      "url": "_framework/dotnet.runtime.r2kbxkuujc.js"
     },
     {
       "hash": "sha256-SZLtQnRc0JkwqHab0VUVP7T3uBPSeYzxzDnpxPpUnHk=",
@@ -618,7 +618,7 @@ self.assetsManifest = {
       "url": "icon.svg"
     },
     {
-      "hash": "sha256-5QoZy5/ymDoa7clU2Yt4AwO9kaCvi4jkOYZ/9+fwHj4=",
+      "hash": "sha256-ybx/+W2zEz1xDTkoOYYLms5rjnUqAeLBOJrFR3rfyJc=",
       "url": "index.html"
     },
     {
