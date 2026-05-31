@@ -291,7 +291,8 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error al cargar el gasto: {ex.Message}";
+            errorMessage = "No se pudo cargar el gasto. Inténtalo de nuevo.";
+            Console.Error.WriteLine(ex.ToString());
             selectedAccountId = accounts.First().Id;
             await LoadCategories();
         }
@@ -327,7 +328,8 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error al cargar categorías: {ex.Message}";
+            errorMessage = "No se pudieron cargar las categorías. Inténtalo de nuevo.";
+            Console.Error.WriteLine(ex.ToString());
         }
     }
 
@@ -388,7 +390,8 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error al guardar el gasto: {ex.Message}";
+            errorMessage = "No se pudo guardar el gasto. Inténtalo de nuevo.";
+            Console.Error.WriteLine(ex.ToString());
         }
         finally
         {

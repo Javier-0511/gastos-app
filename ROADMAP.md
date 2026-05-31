@@ -192,12 +192,12 @@ Ninguno. (Mayor exposición teóricacorrige: toda la seguridad depende de RLS �
 - **A3 — Autorización por-gasto en compartida** (`policies.sql`, UPDATE/DELETE de `expenses`): cualquier miembro puede editar/borrar gastos de otro y cambiar `paid_by` (el `WITH CHECK` del UPDATE no lo revalida). Impacto nulo hoy (1 usuario), Alto cuando entre Marta. Fix: decidir regla de negocio antes de Fase 4.
 
 ### 🟡 Medio
-- **M1 — Race condition** en `BudgetService.UpsertFieldsAsync` (leer→insert/update). La UNIQUE evita duplicado pero la 2ª op falla. Fix: upsert nativo con conflict target.
+- ~~**M1 — Race condition**~~ ✅ *(2026-05-31: Insert en try/catch; si falla por conflicto UNIQUE, recupera el registro existente y lo actualiza.)*
 - **M2 — Arrastre de saldo se rompe con meses con hueco** (`MonthView.CalcularSaldoFinalMesAnterior`): solo mira el mes inmediatamente anterior. Fix: retroceder al último mes con `opening_balance`.
-- **M3 — Validación incompleta** (`NewExpense`, modales de `MonthView`): importe solo valida `>0` (sin tope ni control de decimales, acepta 0,001); nómina/aporte permiten negativos; nombre de categoría duplicado da error técnico. Fix: redondear a 2 decimales, validar `>=0`, pre-comprobar duplicados.
-- **M4 — Errores técnicos crudos al usuario**: varios `catch (Exception ex)` muestran `ex.Message` (Categories, NewExpense, MonthView:623, Setup:73). Fix: mensajes amables + detalle solo en consola.
-- **M5 — `GetByMonthAsync` con `&&`** (`ExpenseService`): funciona con 2 condiciones pero es el patrón que rompe con 3+ (PGRST100). Fix: encadenar `.Where().Where()`.
-- **M6 — Modal con `await` colgado** (`ConfirmModal.ShowAsync`): si se navega con el modal abierto, el `TaskCompletionSource` nunca se completa. Fix: completar con `false` en `Dispose()`.
+- ~~**M3 — Validación incompleta**~~ ✅ *(2026-05-31: nómina/aporte validan `>= 0` en los modales; nombre duplicado de categoría se comprueba antes de llamar a la BBDD.)*
+- ~~**M4 — Errores técnicos crudos al usuario**~~ ✅ *(2026-05-31: todos los `catch` muestran mensajes amables; detalle técnico va a `Console.Error`.)*
+- ~~**M5 — `GetByMonthAsync` con `&&`**~~ ✅ *(2026-05-31: partido en dos `.Where()` encadenados.)*
+- ~~**M6 — Modal con `await` colgado**~~ ✅ *(2026-05-31: `ConfirmModal` implementa `IDisposable` y completa el TCS con `false` al hacer dispose.)*
 
 ### 🟢 Bajo
 - ~~**B1 — Duplicación**~~ ✅ *(2026-05-25: `FormatMoney` + `CultureInfo("es-ES")` → `Helpers/AppFormat.cs`. CSS de modal → `app.css` global. Pestañas de cuenta → `Shared/AccountTabs.razor` usado en 4 páginas.)*

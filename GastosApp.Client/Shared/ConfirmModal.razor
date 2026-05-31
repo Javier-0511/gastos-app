@@ -32,6 +32,8 @@
     </div>
 }
 
+@implements IDisposable
+
 @code {
     [Parameter] public string Title { get; set; } = "Confirmar";
     [Parameter] public string Message { get; set; } = "¿Estás seguro?";
@@ -68,4 +70,6 @@
     }
 
     private void HandleBackdropClick() => Cancel();
+
+    public void Dispose() => tcs?.TrySetResult(false);
 }

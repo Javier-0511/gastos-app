@@ -157,7 +157,8 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error al cargar categorías: {ex.Message}";
+            errorMessage = "No se pudieron cargar las categorías. Inténtalo de nuevo.";
+            Console.Error.WriteLine(ex.ToString());
         }
     }
 
@@ -197,6 +198,17 @@ else
     {
         if (string.IsNullOrWhiteSpace(formName)) return;
 
+        var trimmedName = formName.Trim();
+        var isDuplicate = currentCategories.Any(c =>
+            c.Name.Equals(trimmedName, StringComparison.OrdinalIgnoreCase) &&
+            c.Id != (editingId ?? Guid.Empty));
+
+        if (isDuplicate)
+        {
+            errorMessage = $"Ya existe una categoría con el nombre \"{trimmedName}\" en esta cuenta.";
+            return;
+        }
+
         isSaving = true;
         errorMessage = "";
 
@@ -204,11 +216,11 @@ else
         {
             if (editingId.HasValue)
             {
-                await CategorySvc.UpdateAsync(editingId.Value, formName.Trim(), formBlock);
+                await CategorySvc.UpdateAsync(editingId.Value, trimmedName, formBlock);
             }
             else
             {
-                await CategorySvc.CreateAsync(selectedAccountId, formName.Trim(), formBlock);
+                await CategorySvc.CreateAsync(selectedAccountId, trimmedName, formBlock);
             }
 
             CancelForm();
@@ -216,7 +228,8 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error al guardar: {ex.Message}";
+            errorMessage = "No se pudo guardar la categoría. Inténtalo de nuevo.";
+            Console.Error.WriteLine(ex.ToString());
         }
         finally
         {
@@ -234,9 +247,8 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"No se pudo borrar \"{cat.Name}\". " +
-                "Si tiene gastos asociados, primero hay que reasignarlos o borrarlos. " +
-                $"Detalle: {ex.Message}";
+            errorMessage = $"No se pudo borrar \"{cat.Name}\". Si tiene gastos asociados, bórralos primero.";
+            Console.Error.WriteLine(ex.ToString());
         }
     }
 

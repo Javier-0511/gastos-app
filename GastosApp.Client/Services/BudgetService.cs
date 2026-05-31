@@ -72,14 +72,22 @@ public class BudgetService
             };
             mutate(newBudget);
 
-            var response = await _supabase.Client.From<MonthlyBudget>().Insert(newBudget);
-            return response.Models.First();
+            try
+            {
+                var response = await _supabase.Client.From<MonthlyBudget>().Insert(newBudget);
+                return response.Models.First();
+            }
+            catch
+            {
+                // Otra llamada concurrente insertó primero (race condition).
+                // Recuperamos el registro real y lo actualizamos.
+                existing = await GetForMonthAsync(accountId, year, month)
+                    ?? throw new InvalidOperationException("No se pudo crear ni encontrar el registro mensual.");
+            }
         }
-        else
-        {
-            mutate(existing);
-            var response = await existing.Update<MonthlyBudget>();
-            return response.Models.First();
-        }
+
+        mutate(existing);
+        var updateResponse = await existing.Update<MonthlyBudget>();
+        return updateResponse.Models.First();
     }
 }

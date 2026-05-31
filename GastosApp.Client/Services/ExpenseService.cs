@@ -65,7 +65,8 @@ public class ExpenseService
 
         var response = await _supabase.Client
             .From<Expense>()
-            .Where(e => e.ExpenseDate >= from && e.ExpenseDate < to)
+            .Where(e => e.ExpenseDate >= from)
+            .Where(e => e.ExpenseDate < to)
             .Order(e => e.ExpenseDate, Constants.Ordering.Descending)
             .Get();
 

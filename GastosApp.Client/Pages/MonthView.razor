@@ -406,6 +406,7 @@ else
     private string numberModalTitle = "";
     private string numberModalHint = "";
     private string numberModalError = "";
+    private bool numberModalAllowNegative = false;
     private Func<decimal, Task>? numberModalOnSave;
 
     // TODO: cuando entre Marta y queramos soportar share_percent dinámico,
@@ -489,7 +490,8 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error al cargar gastos: {ex.Message}";
+            errorMessage = "No se pudieron cargar los gastos. Inténtalo de nuevo.";
+            Console.Error.WriteLine(ex.ToString());
             currentExpenses = new();
         }
     }
@@ -519,7 +521,8 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error al cargar previsión: {ex.Message}";
+            errorMessage = "No se pudo cargar la previsión. Inténtalo de nuevo.";
+            Console.Error.WriteLine(ex.ToString());
             currentBudget = null;
             sharedBudgetThisMonth = null;
         }
@@ -589,7 +592,8 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"No se pudo borrar el gasto: {ex.Message}";
+            errorMessage = "No se pudo borrar el gasto. Inténtalo de nuevo.";
+            Console.Error.WriteLine(ex.ToString());
         }
     }
 
@@ -629,6 +633,7 @@ else
     {
         numberModalTitle = "Saldo inicial del mes";
         numberModalError = "";
+        numberModalAllowNegative = true;
         numberModalOnSave = async (value) =>
         {
             currentBudget = await Budgets.SetOpeningBalanceAsync(
@@ -703,6 +708,7 @@ else
         numberModalTitle = "Nómina del mes";
         numberModalHint = $"Ingresos que entran en esta cuenta durante {MonthLabel}.";
         numberModalError = "";
+        numberModalAllowNegative = false;
         numberModalOnSave = async (value) =>
         {
             currentBudget = await Budgets.SetIncomeAsync(
@@ -717,6 +723,7 @@ else
         numberModalTitle = "Aporte conjunto del mes";
         numberModalHint = $"Cantidad total que entra en la cuenta compartida en {MonthLabel} (la suma de los dos miembros).";
         numberModalError = "";
+        numberModalAllowNegative = false;
         numberModalOnSave = async (value) =>
         {
             currentBudget = await Budgets.SetAmountAsync(
@@ -737,6 +744,12 @@ else
     {
         if (numberInput is null || numberModalOnSave is null) return;
 
+        if (!numberModalAllowNegative && numberInput < 0)
+        {
+            numberModalError = "El valor no puede ser negativo.";
+            return;
+        }
+
         isSavingNumber = true;
         numberModalError = "";
 
@@ -748,7 +761,8 @@ else
         }
         catch (Exception ex)
         {
-            numberModalError = $"Error al guardar: {ex.Message}";
+            numberModalError = "No se pudo guardar. Inténtalo de nuevo.";
+            Console.Error.WriteLine(ex.ToString());
         }
         finally
         {
