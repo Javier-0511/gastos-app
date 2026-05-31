@@ -212,10 +212,16 @@ else
     private string description = "";
     private DateTime expenseDate = DateTime.Today;
 
-    private List<Category> filteredCategories =>
-        selectedBlock is null
+    // Cacheado: se recalcula con RecomputeFilteredCategories() cuando cambian
+    // sus dependencias (selectedBlock o la lista cargada de categorías).
+    private List<Category> filteredCategories = new();
+
+    private void RecomputeFilteredCategories()
+    {
+        filteredCategories = selectedBlock is null
             ? new List<Category>()
             : categories.Where(c => c.Block == selectedBlock).ToList();
+    }
 
     private bool IsValid =>
         selectedAccountId != Guid.Empty
@@ -280,6 +286,7 @@ else
             if (existingCat is not null)
             {
                 selectedBlock = existingCat.Block;
+                RecomputeFilteredCategories();
             }
 
             selectedCategoryId = expense.CategoryId;
@@ -320,6 +327,8 @@ else
                 selectedBlock = blocks.FirstOrDefault(b => categories.Any(c => c.Block == b))
                                 ?? blocks.FirstOrDefault();
             }
+
+            RecomputeFilteredCategories();
         }
         catch (Exception ex)
         {
@@ -339,6 +348,7 @@ else
                 selectedCategoryId = null;
             }
         }
+        RecomputeFilteredCategories();
     }
 
     private string[] BlocksForSelectedAccount()
