@@ -109,7 +109,9 @@ else
         @* Fecha *@
         <div class="mb-4">
             <label class="form-label">Fecha</label>
-            <input type="date" class="form-control" @bind="expenseDate" />
+            <input type="date" class="form-control"
+                   max="@DateTime.Today.ToString("yyyy-MM-dd")"
+                   @bind="expenseDate" />
         </div>
 
         @* Botón guardar *@
@@ -218,7 +220,8 @@ else
     private bool IsValid =>
         selectedAccountId != Guid.Empty
         && selectedCategoryId.HasValue
-        && amount is > 0;
+        && amount is > 0
+        && expenseDate.Date <= DateTime.Today;
 
     protected override async Task OnInitializedAsync()
     {
@@ -357,6 +360,7 @@ else
 
         isSaving = true;
         errorMessage = "";
+        var roundedAmount = Math.Round(amount.Value, 2);
 
         try
         {
@@ -367,7 +371,7 @@ else
                     selectedAccountId,
                     selectedCategoryId.Value,
                     description.Trim(),
-                    amount.Value,
+                    roundedAmount,
                     expenseDate);
             }
             else
@@ -376,7 +380,7 @@ else
                     selectedAccountId,
                     selectedCategoryId.Value,
                     description.Trim(),
-                    amount.Value,
+                    roundedAmount,
                     expenseDate);
             }
 

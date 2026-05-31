@@ -201,10 +201,10 @@ Ninguno. (Mayor exposición teórica: toda la seguridad depende de RLS — pero 
 
 ### 🟢 Bajo
 - ~~**B1 — Duplicación**~~ ✅ *(2026-05-25: `FormatMoney` + `CultureInfo("es-ES")` → `Helpers/AppFormat.cs`. CSS de modal → `app.css` global. Pestañas de cuenta → `Shared/AccountTabs.razor` usado en 4 páginas.)*
-- **B2 — N+1** en `LoadAllCategories` (query por cuenta en bucle). Fix: una query y agrupar en memoria (RLS ya limita).
+- ~~**B2 — N+1**~~ ✅ *(2026-05-31: `GetByAccountsAsync()` con `Filter In` en `CategoryService`; `MonthView` y `Dashboard` pasan de N queries a 1.)*
 - ~~**B3 — `filteredCategories`** (`NewExpense`) recalcula `Where().ToList()` en cada acceso. Fix: cachear.~~ ✅ *(2026-05-25: convertido a campo cacheado, `RecomputeFilteredCategories()` se invoca al cambiar bloque o categorías)*
-- **B4 — Edge cases**: gastos con fecha futura y sub-céntimos permitidos.
-- **B5 — `.claude/` sin ignorar** en `.gitignore` (aparece untracked en cada commit).
+- ~~**B4 — Edge cases**~~ ✅ *(2026-05-31: `NewExpense` bloquea fechas futuras (atributo `max` + `IsValid`) y redondea importe a 2 decimales antes de guardar.)*
+- ~~**B5 — `.claude/` sin ignorar**~~ ✅ *(ya estaba en `.gitignore` desde 2026-05-25)*
 
 ### ✅ Verificado correcto
 `decimal` en todo el dinero · sin XSS (ningún `MarkupString`) · sin inyección SQL (PostgREST parametriza) · RLS coherente sin recursión · AnonKey pública es el modelo correcto de Supabase · `bin/obj/.vs` correctamente ignorados · build sin warnings.

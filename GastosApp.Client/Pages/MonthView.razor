@@ -466,12 +466,9 @@ else
     private async Task LoadAllCategories()
     {
         categoryMap.Clear();
-        foreach (var acc in accounts)
-        {
-            var cats = await CategorySvc.GetByAccountAsync(acc.Id);
-            foreach (var c in cats)
-                categoryMap[c.Id] = c;
-        }
+        var cats = await CategorySvc.GetByAccountsAsync(accounts.Select(a => a.Id));
+        foreach (var c in cats)
+            categoryMap[c.Id] = c;
     }
 
     private async Task LoadMonthData()

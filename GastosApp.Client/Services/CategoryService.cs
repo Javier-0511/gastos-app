@@ -23,6 +23,20 @@ public class CategoryService
         return response.Models;
     }
 
+    public async Task<List<Category>> GetByAccountsAsync(IEnumerable<Guid> accountIds)
+    {
+        var ids = accountIds.ToList();
+        if (ids.Count == 0) return [];
+
+        var response = await _supabase.Client
+            .From<Category>()
+            .Filter("account_id", Constants.Operator.In, ids.Select(id => (object)id.ToString()).ToList())
+            .Order(c => c.Name, Constants.Ordering.Ascending)
+            .Get();
+
+        return response.Models;
+    }
+
     public async Task<Category> CreateAsync(Guid accountId, string name, string block)
     {
         var newCategory = new Category
