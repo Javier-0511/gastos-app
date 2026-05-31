@@ -23,17 +23,9 @@ else
         <h2 class="mb-3">@(IsEditMode ? "Editar gasto" : "Nuevo gasto")</h2>
 
         @* Pestañas de cuenta *@
-        <ul class="nav nav-tabs mb-4">
-            @foreach (var acc in accounts)
-            {
-                <li class="nav-item">
-                    <button class="nav-link @(selectedAccountId == acc.Id ? "active" : "")"
-                            @onclick="() => SelectAccount(acc.Id)">
-                        @acc.Name
-                    </button>
-                </li>
-            }
-        </ul>
+        <AccountTabs Accounts="accounts"
+                     SelectedAccountId="selectedAccountId"
+                     OnAccountSelected="SelectAccount" />
 
         @if (!string.IsNullOrEmpty(errorMessage))
         {

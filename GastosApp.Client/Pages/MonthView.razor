@@ -1,5 +1,6 @@
 @page "/mes"
 @using System.Globalization
+@* FormatMoney y CultureInfo("es-ES") viven ahora en AppFormat (Helpers/AppFormat.cs) *@
 @using GastosApp.Client.Models
 @using GastosApp.Client.Services
 @inject AuthService Auth
@@ -37,17 +38,9 @@ else
         </a>
 
         @* Pestañas de cuenta *@
-        <ul class="nav nav-tabs mb-3">
-            @foreach (var acc in accounts)
-            {
-                <li class="nav-item">
-                    <button class="nav-link @(selectedAccountId == acc.Id ? "active" : "")"
-                            @onclick="() => SelectAccount(acc.Id)">
-                        @acc.Name
-                    </button>
-                </li>
-            }
-        </ul>
+        <AccountTabs Accounts="accounts"
+                     SelectedAccountId="selectedAccountId"
+                     OnAccountSelected="SelectAccount" />
 
         @if (!string.IsNullOrEmpty(errorMessage))
         {
@@ -197,7 +190,7 @@ else
                                                         : exp.Description)
                                                 </div>
                                                 <div class="expense-meta text-muted small">
-                                                    @exp.ExpenseDate.ToString("dd MMM", new CultureInfo("es-ES"))
+                                                    @exp.ExpenseDate.ToString("dd MMM", AppFormat.Es)
                                                     · @(CategoryOf(exp.CategoryId)?.Name ?? "—")
                                                 </div>
                                             </div>
@@ -382,28 +375,7 @@ else
         margin-top: 4px;
     }
 
-    /* Modal (mismo look que ConfirmModal) */
-    .modal-backdrop-custom {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1050;
-        padding: 16px;
-        animation: fade-in-up 0.18s ease-out both;
-    }
-
-    .modal-card {
-        background: white;
-        border-radius: 12px;
-        padding: 20px;
-        max-width: 400px;
-        width: 100%;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        animation: pop-in 0.22s ease-out both;
-    }
+    /* .modal-backdrop-custom y .modal-card viven en app.css (global) */
 </style>
 
 @code {
@@ -446,7 +418,7 @@ else
         get
         {
             var date = new DateTime(currentYear, currentMonth, 1);
-            return date.ToString("MMMM yyyy", new CultureInfo("es-ES"));
+            return date.ToString("MMMM yyyy", AppFormat.Es);
         }
     }
 
@@ -789,8 +761,7 @@ else
 
     // ===== Helpers de formato =====
 
-    private static string FormatMoney(decimal amount) =>
-        amount.ToString("N2", new CultureInfo("es-ES")) + " €";
+    private static string FormatMoney(decimal amount) => AppFormat.Money(amount);
 
     private static string SinDefinir() => "—";
 

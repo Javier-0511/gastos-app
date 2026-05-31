@@ -25,17 +25,9 @@ else
         <h2 class="mb-3">Dashboard</h2>
 
         @* Pestañas de cuenta *@
-        <ul class="nav nav-tabs mb-3">
-            @foreach (var acc in accounts)
-            {
-                <li class="nav-item">
-                    <button class="nav-link @(selectedAccountId == acc.Id ? "active" : "")"
-                            @onclick="() => SelectAccount(acc.Id)">
-                        @acc.Name
-                    </button>
-                </li>
-            }
-        </ul>
+        <AccountTabs Accounts="accounts"
+                     SelectedAccountId="selectedAccountId"
+                     OnAccountSelected="SelectAccount" />
 
         @* KPI: total mes actual + comparativa vs mes anterior *@
         <div class="kpi-card mb-3">
@@ -218,8 +210,8 @@ else
         }
     };
 
-    // Cultura única para los labels de mes (evita repetir "new CultureInfo(...)").
-    private static readonly CultureInfo Es = new("es-ES");
+    // Cultura tomada del helper global AppFormat.Es
+    private static CultureInfo Es => AppFormat.Es;
 
     private string MonthLabel
     {
@@ -362,8 +354,7 @@ else
         await LoadData();
     }
 
-    private static string FormatMoney(decimal amount) =>
-        amount.ToString("N2", Es) + " €";
+    private static string FormatMoney(decimal amount) => AppFormat.Money(amount);
 
     /// <summary>DTO local para el gráfico de evolución mensual.</summary>
     public record MonthBucket(DateTime Month, decimal Total)

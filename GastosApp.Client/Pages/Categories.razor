@@ -21,17 +21,9 @@ else
     <div class="stagger">
     <h2>Categorías</h2>
 
-    <ul class="nav nav-tabs mb-3">
-        @foreach (var acc in accounts)
-        {
-            <li class="nav-item">
-                <button class="nav-link @(selectedAccountId == acc.Id ? "active" : "")"
-                        @onclick="() => SelectAccount(acc.Id)">
-                    @acc.Name
-                </button>
-            </li>
-        }
-    </ul>
+    <AccountTabs Accounts="accounts"
+                 SelectedAccountId="selectedAccountId"
+                 OnAccountSelected="SelectAccount" />
 
     @if (!string.IsNullOrEmpty(errorMessage))
     {

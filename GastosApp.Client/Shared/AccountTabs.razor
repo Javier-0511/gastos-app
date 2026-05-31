@@ -1,0 +1,33 @@
+@*
+    Pestañas de selección de cuenta. Antes duplicadas en MonthView,
+    NewExpense, Dashboard y Categories.
+
+    Uso:
+        <AccountTabs Accounts="accounts"
+                     SelectedAccountId="selectedAccountId"
+                     OnAccountSelected="SelectAccount" />
+*@
+@using GastosApp.Client.Models
+
+<ul class="nav nav-tabs mb-3">
+    @foreach (var acc in Accounts)
+    {
+        <li class="nav-item">
+            <button class="nav-link @(SelectedAccountId == acc.Id ? "active" : "")"
+                    @onclick="() => OnAccountSelected.InvokeAsync(acc.Id)">
+                @acc.Name
+            </button>
+        </li>
+    }
+</ul>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<Account> Accounts { get; set; } = new();
+
+    [Parameter, EditorRequired]
+    public Guid SelectedAccountId { get; set; }
+
+    [Parameter, EditorRequired]
+    public EventCallback<Guid> OnAccountSelected { get; set; }
+}

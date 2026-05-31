@@ -200,7 +200,7 @@ Ninguno. (Mayor exposición teórica: toda la seguridad depende de RLS — pero 
 - **M6 — Modal con `await` colgado** (`ConfirmModal.ShowAsync`): si se navega con el modal abierto, el `TaskCompletionSource` nunca se completa. Fix: completar con `false` en `Dispose()`.
 
 ### 🟢 Bajo
-- **B1 — Duplicación**: `FormatMoney` (MonthView + Dashboard), CSS de modal (ConfirmModal + MonthView), pestañas de cuenta (4 páginas), `new CultureInfo("es-ES")` repetido. Fix: centralizar en helpers/componentes (como `Blocks.cs`).
+- ~~**B1 — Duplicación**~~ ✅ *(2026-05-25: `FormatMoney` + `CultureInfo("es-ES")` → `Helpers/AppFormat.cs`. CSS de modal → `app.css` global. Pestañas de cuenta → `Shared/AccountTabs.razor` usado en 4 páginas.)*
 - **B2 — N+1** en `LoadAllCategories` (query por cuenta en bucle). Fix: una query y agrupar en memoria (RLS ya limita).
 - ~~**B3 — `filteredCategories`** (`NewExpense`) recalcula `Where().ToList()` en cada acceso. Fix: cachear.~~ ✅ *(2026-05-25: convertido a campo cacheado, `RecomputeFilteredCategories()` se invoca al cambiar bloque o categorías)*
 - **B4 — Edge cases**: gastos con fecha futura y sub-céntimos permitidos.
