@@ -602,7 +602,7 @@ else
     private decimal AporteACompartida()
     {
         if (IsCurrentAccountShared) return 0m;
-        return sharedAmount * MyShareInShared;
+        return SaldoCalculator.AporteACompartida(sharedAmount, MyShareInShared);
     }
 
     /// <summary>
@@ -615,15 +615,13 @@ else
 
         if (IsCurrentAccountShared)
         {
-            // Compartida: saldo_inicial + aporte_conjunto − gastos
-            var entradas = currentBudget?.Amount ?? 0m;
-            return opening + entradas - currentTotal;
+            return SaldoCalculator.SaldoFinalCompartida(
+                opening, currentBudget?.Amount ?? 0m, currentTotal);
         }
         else
         {
-            // Personal: saldo_inicial + nómina − aporte_a_compartida − gastos
-            var nomina = currentBudget?.Income ?? 0m;
-            return opening + nomina - AporteACompartida() - currentTotal;
+            return SaldoCalculator.SaldoFinalPersonal(
+                opening, currentBudget?.Income ?? 0m, AporteACompartida(), currentTotal);
         }
     }
 
@@ -662,43 +660,87 @@ else
 
     /// <summary>
     /// Saldo final calculado del mes inmediatamente anterior, para sugerirlo
-    /// como saldo inicial del mes actual. Devuelve null si falta información
-    /// (sin opening_balance del mes anterior).
+    /// como saldo inicial del mes actual.
+    ///
+    /// No se conforma con mirar solo el mes anterior: retrocede hasta el último
+    /// mes que tenga saldo inicial definido (el "ancla") y arrastra el saldo
+    /// hacia delante mes a mes hasta el mes anterior, atravesando los meses con
+    /// hueco (sin saldo propio). Así un mes sin definir intermedio no rompe la
+    /// sugerencia. Devuelve null si no hay ningún mes anterior con saldo.
     /// </summary>
     private async Task<decimal?> CalcularSaldoFinalMesAnterior()
     {
         try
         {
+            // Tope de seguridad: no buscar indefinidamente hacia atrás.
+            const int maxLookback = 24;
+
             var prevDate = new DateTime(currentYear, currentMonth, 1).AddMonths(-1);
-            int py = prevDate.Year, pm = prevDate.Month;
 
-            var prevBudget = await Budgets.GetForMonthAsync(selectedAccountId, py, pm);
-            if (prevBudget?.OpeningBalance is not decimal prevOpening)
-                return null;
-
-            // Gastos del mes anterior de la misma cuenta.
-            var prevExpensesAll = await Expenses.GetByMonthAsync(py, pm);
-            var prevSpent = prevExpensesAll
-                .Where(e => e.AccountId == selectedAccountId)
-                .Sum(e => e.Amount);
-
-            if (IsCurrentAccountShared)
+            // 1) Retroceder hasta el mes ancla (el último con saldo inicial).
+            DateTime? anchor = null;
+            decimal anchorOpening = 0m;
+            var probe = prevDate;
+            for (int i = 0; i < maxLookback; i++)
             {
-                return prevOpening + (prevBudget.Amount) - prevSpent;
+                var b = await Budgets.GetForMonthAsync(selectedAccountId, probe.Year, probe.Month);
+                if (b?.OpeningBalance is decimal ob)
+                {
+                    anchor = probe;
+                    anchorOpening = ob;
+                    break;
+                }
+                probe = probe.AddMonths(-1);
             }
-            else
+
+            if (anchor is null) return null;
+
+            // 2) Arrastrar el saldo desde el ancla hasta el mes anterior (inclusive).
+            //    El mes ancla parte de su propio saldo inicial; cada mes con hueco
+            //    posterior parte del saldo final arrastrado del mes anterior.
+            decimal running = anchorOpening;
+            var cursor = anchor.Value;
+            while (true)
             {
-                var prevSharedBudget = SharedAccount is null
-                    ? null
-                    : await Budgets.GetForMonthAsync(SharedAccount.Id, py, pm);
-                var prevAporte = (prevSharedBudget?.Amount ?? 0m) * MyShareInShared;
-                var prevIncome = prevBudget.Income ?? 0m;
-                return prevOpening + prevIncome - prevAporte - prevSpent;
+                running = await SaldoFinalDeMes(cursor.Year, cursor.Month, running);
+                if (cursor.Year == prevDate.Year && cursor.Month == prevDate.Month)
+                    break;
+                cursor = cursor.AddMonths(1);
             }
+
+            return running;
         }
         catch
         {
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Saldo final de un mes concreto de la cuenta activa, partiendo de un saldo
+    /// inicial dado (no necesariamente el guardado: en el arrastre usamos el saldo
+    /// arrastrado del mes anterior). Recoge gastos y previsión de ese mes.
+    /// </summary>
+    private async Task<decimal> SaldoFinalDeMes(int year, int month, decimal opening)
+    {
+        var budget = await Budgets.GetForMonthAsync(selectedAccountId, year, month);
+
+        var expensesAll = await Expenses.GetByMonthAsync(year, month);
+        var spent = expensesAll
+            .Where(e => e.AccountId == selectedAccountId)
+            .Sum(e => e.Amount);
+
+        if (IsCurrentAccountShared)
+        {
+            return SaldoCalculator.SaldoFinalCompartida(opening, budget?.Amount ?? 0m, spent);
+        }
+        else
+        {
+            var sharedBudget = SharedAccount is null
+                ? null
+                : await Budgets.GetForMonthAsync(SharedAccount.Id, year, month);
+            var aporte = SaldoCalculator.AporteACompartida(sharedBudget?.Amount ?? 0m, MyShareInShared);
+            return SaldoCalculator.SaldoFinalPersonal(opening, budget?.Income ?? 0m, aporte, spent);
         }
     }
 

@@ -188,12 +188,12 @@ Ninguno. (Mayor exposición teóricacorrige: toda la seguridad depende de RLS �
 
 ### 🟠 Alto
 - ~~**A1 — Setup no atómico**~~ ✅ *(2026-05-31: `Home` redirige a setup si `count < 2`; `Setup` carga cuentas existentes al init y solo crea las que faltan — idempotente.)*
-- **A2 — Tests = 0%** sobre lógica financiera (`SaldoFinal`, `AporteACompartida`, `CalcularSaldoFinalMesAnterior`, agregaciones Dashboard). Viven en `.razor` acoplados a Supabase, no testeables. Fix: extraer cálculos a clase pura + proyecto xUnit.
+- **A2 — Tests = 0%** sobre lógica financiera (`SaldoFinal`, `AporteACompartida`, `CalcularSaldoFinalMesAnterior`, agregaciones Dashboard). Viven en `.razor` acoplados a Supabase, no testeables. Fix: extraer cálculos a clase pura + proyecto xUnit. *(2026-05-31: medio hecho — la fórmula del saldo ya está extraída a `Helpers/SaldoCalculator.cs` (clase pura, sin Supabase). Falta crear el proyecto xUnit y escribir los tests. Pospuesto por decisión de Javi.)*
 - **A3 — Autorización por-gasto en compartida** (`policies.sql`, UPDATE/DELETE de `expenses`): cualquier miembro puede editar/borrar gastos de otro y cambiar `paid_by` (el `WITH CHECK` del UPDATE no lo revalida). Impacto nulo hoy (1 usuario), Alto cuando entre Marta. Fix: decidir regla de negocio antes de Fase 4.
 
 ### 🟡 Medio
 - ~~**M1 — Race condition**~~ ✅ *(2026-05-31: Insert en try/catch; si falla por conflicto UNIQUE, recupera el registro existente y lo actualiza.)*
-- **M2 — Arrastre de saldo se rompe con meses con hueco** (`MonthView.CalcularSaldoFinalMesAnterior`): solo mira el mes inmediatamente anterior. Fix: retroceder al último mes con `opening_balance`.
+- ~~**M2 — Arrastre de saldo se rompe con meses con hueco**~~ ✅ *(2026-05-31: `CalcularSaldoFinalMesAnterior` ahora retrocede hasta el último mes con `opening_balance` (ancla, tope 24 meses) y arrastra el saldo hacia delante mes a mes hasta el mes anterior, atravesando los huecos. Fórmula extraída a `SaldoCalculator` y reutilizada por el nuevo helper `SaldoFinalDeMes`.)*
 - ~~**M3 — Validación incompleta**~~ ✅ *(2026-05-31: nómina/aporte validan `>= 0` en los modales; nombre duplicado de categoría se comprueba antes de llamar a la BBDD.)*
 - ~~**M4 — Errores técnicos crudos al usuario**~~ ✅ *(2026-05-31: todos los `catch` muestran mensajes amables; detalle técnico va a `Console.Error`.)*
 - ~~**M5 — `GetByMonthAsync` con `&&`**~~ ✅ *(2026-05-31: partido en dos `.Where()` encadenados.)*
@@ -214,6 +214,12 @@ Ninguno. (Mayor exposición teóricacorrige: toda la seguridad depende de RLS �
 ---
 
 ## Cambios y notas posteriores
+
+### 2026-05-31 — Backlog QA: M2 cerrado, A2 medio hecho, A3 aparcado
+
+- **M2 (arrastre con huecos)** ✅ arreglado (ver detalle en el backlog). De paso se extrajo la fórmula del saldo a `Helpers/SaldoCalculator.cs`, una **clase pura** (solo números, sin Supabase ni UI) reutilizada por `SaldoFinal`, `AporteACompartida` y el arrastre. Cero duplicación de la fórmula.
+- **A2 (tests)**: la extracción anterior deja `SaldoCalculator` listo para testear. Falta el proyecto xUnit. Pospuesto por decisión de Javi (se hará cuando toque).
+- **A3 (autorización por-gasto en compartida)**: confirmado que se aparca hasta Fase 4. Impacto nulo con un solo usuario; requiere decidir la regla de negocio (quién puede editar/borrar qué) cuando entre Marta.
 
 ### 2026-05-31 — Registro de usuarios en la pantalla de login
 
