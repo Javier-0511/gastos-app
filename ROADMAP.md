@@ -203,7 +203,7 @@ Ninguno. (Mayor exposición teóricacorrige: toda la seguridad depende de RLS �
 - ~~**B1 — Duplicación**~~ ✅ *(2026-05-25: `FormatMoney` + `CultureInfo("es-ES")` → `Helpers/AppFormat.cs`. CSS de modal → `app.css` global. Pestañas de cuenta → `Shared/AccountTabs.razor` usado en 4 páginas.)*
 - ~~**B2 — N+1**~~ ✅ *(2026-05-31: `GetByAccountsAsync()` con `Filter In` en `CategoryService`; `MonthView` y `Dashboard` pasan de N queries a 1.)*
 - ~~**B3 — `filteredCategories`** (`NewExpense`) recalcula `Where().ToList()` en cada acceso. Fix: cachear.~~ ✅ *(2026-05-25: convertido a campo cacheado, `RecomputeFilteredCategories()` se invoca al cambiar bloque o categorías)*
-- ~~**B4 — Edge cases**~~ ✅ *(2026-05-31: `NewExpense` bloquea fechas futuras (atributo `max` + `IsValid`) y redondea importe a 2 decimales antes de guardar.)*
+- ~~**B4 — Edge cases**~~ ✅ *(2026-05-31: `NewExpense` redondea importe a 2 decimales antes de guardar. El bloqueo de fechas futuras se revirtió el 2026-05-31 a petición de Javi: ahora se permiten fechas futuras sin límite para poder apuntar cargos programados/recurrentes ya conocidos.)*
 - ~~**B5 — `.claude/` sin ignorar**~~ ✅ *(ya estaba en `.gitignore` desde 2026-05-25)*
 
 ### ✅ Verificado correcto

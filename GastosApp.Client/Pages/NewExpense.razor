@@ -110,7 +110,6 @@ else
         <div class="mb-4">
             <label class="form-label">Fecha</label>
             <input type="date" class="form-control"
-                   max="@DateTime.Today.ToString("yyyy-MM-dd")"
                    @bind="expenseDate" />
         </div>
 
@@ -220,8 +219,7 @@ else
     private bool IsValid =>
         selectedAccountId != Guid.Empty
         && selectedCategoryId.HasValue
-        && amount is > 0
-        && expenseDate.Date <= DateTime.Today;
+        && amount is > 0;
 
     protected override async Task OnInitializedAsync()
     {
