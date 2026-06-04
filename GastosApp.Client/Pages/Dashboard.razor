@@ -46,28 +46,6 @@ else
             </div>
         </div>
 
-        @* Evolución últimos 6 meses *@
-        <div class="chart-card mb-3">
-            <h6 class="chart-title">Evolución últimos 6 meses</h6>
-            @if (last6Months.All(m => m.Total == 0m))
-            {
-                <p class="text-muted small mb-0">No hay gastos en los últimos 6 meses.</p>
-            }
-            else
-            {
-                <ApexChart TItem="MonthBucket"
-                           @key="@($"evolution-{selectedAccountId}")"
-                           Options="evolutionOptions">
-                    <ApexPointSeries TItem="MonthBucket"
-                                     Items="last6Months"
-                                     Name="Gastado"
-                                     SeriesType="SeriesType.Bar"
-                                     XValue='m => m.Label'
-                                     YValue="m => m.Total" />
-                </ApexChart>
-            }
-        </div>
-
         @* Tarta por bloque del mes actual *@
         <div class="chart-card mb-3">
             <h6 class="chart-title">Reparto por bloque — @MonthLabel</h6>
@@ -116,12 +94,14 @@ else
                             @foreach (var c in sel.Categories)
                             {
                                 <li class="cat-row">
-                                    <span class="cat-name">@c.Name</span>
+                                    <div class="cat-row-top">
+                                        <span class="cat-name">@c.Name</span>
+                                        <span class="cat-total">@FormatMoney(c.Total)</span>
+                                    </div>
                                     <span class="cat-bar-wrap">
                                         <span class="cat-bar"
                                               style="width:@Pct(c.Total, sel.Total)%; background:@sel.Color"></span>
                                     </span>
-                                    <span class="cat-total">@FormatMoney(c.Total)</span>
                                 </li>
                             }
                         </ul>
@@ -131,6 +111,28 @@ else
                 {
                     <p class="text-muted small mb-0 mt-2">Toca un bloque para ver sus categorías.</p>
                 }
+            }
+        </div>
+
+        @* Evolución últimos 6 meses *@
+        <div class="chart-card mb-3">
+            <h6 class="chart-title">Evolución últimos 6 meses</h6>
+            @if (last6Months.All(m => m.Total == 0m))
+            {
+                <p class="text-muted small mb-0">No hay gastos en los últimos 6 meses.</p>
+            }
+            else
+            {
+                <ApexChart TItem="MonthBucket"
+                           @key="@($"evolution-{selectedAccountId}")"
+                           Options="evolutionOptions">
+                    <ApexPointSeries TItem="MonthBucket"
+                                     Items="last6Months"
+                                     Name="Gastado"
+                                     SeriesType="SeriesType.Bar"
+                                     XValue='m => m.Label'
+                                     YValue="m => m.Total" />
+                </ApexChart>
             }
         </div>
     </div>
@@ -257,21 +259,30 @@ else
     .block-detail-title { font-weight: 600; }
     .block-detail-total { font-weight: 700; }
 
+    /* Cada categoría en dos líneas: nombre + importe arriba, barra a lo ancho
+       debajo. Encaja bien en móvil y evita que el nombre se corte. */
     .cat-row {
-        display: grid;
-        grid-template-columns: minmax(90px, 1fr) 2fr auto;
+        padding: 7px 0;
+    }
+
+    .cat-row-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
         gap: 10px;
-        align-items: center;
-        padding: 5px 0;
+        margin-bottom: 5px;
     }
 
     .cat-name {
-        white-space: nowrap;
+        min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .cat-bar-wrap {
+        display: block;
+        width: 100%;
         background: #edf0f2;
         border-radius: 6px;
         height: 8px;

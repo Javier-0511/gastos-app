@@ -384,7 +384,9 @@ else
                     expenseDate);
             }
 
-            Nav.NavigateTo("mes");
+            // Volvemos a la vista de mes manteniendo la cuenta en la que se ha
+            // guardado el gasto (si no, la vista de mes vuelve a la personal).
+            Nav.NavigateTo($"mes?accountId={selectedAccountId}");
         }
         catch (Exception ex)
         {
@@ -397,5 +399,5 @@ else
         }
     }
 
-    private void HandleCancel() => Nav.NavigateTo("mes");
+    private void HandleCancel() => Nav.NavigateTo($"mes?accountId={selectedAccountId}");
 }

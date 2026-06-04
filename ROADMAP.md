@@ -111,8 +111,8 @@ Equivalente al H15/H16 del Excel.
 - [x] Dashboard / resumen con gráficos (`Blazor-ApexCharts` v6).
     - Pantalla `/dashboard` con pestañas Personal / Compartida.
     - KPI: total mes + comparativa vs mes anterior (↑ rojo / ↓ verde).
-    - Gráfico de barras: evolución últimos 6 meses.
-    - Tarta: reparto por categoría del mes.
+    - Tarta donut: **reparto por bloque** (color fijo por bloque) con leyenda clicable. Al tocar un bloque (leyenda o porción del donut) se despliega un recuadro con sus categorías y lo gastado en cada una. *(2026-06-04: antes era por categoría.)*
+    - Gráfico de barras: evolución últimos 6 meses (debajo del rosco).
     - Una sola query al rango de 6 meses (`GetByDateRangeAsync`) y agregaciones en memoria.
     - Truco contra el "ghost data" al cambiar pestañas: `@key` ligado a `selectedAccountId` + reset de colecciones + `Task.Yield()` antes de recargar.
 - [ ] ~~Vista de categorías con tarta de gastos~~ (cubierto por la tarta del dashboard).
@@ -214,6 +214,13 @@ Ninguno. (Mayor exposición teóricacorrige: toda la seguridad depende de RLS �
 ---
 
 ## Cambios y notas posteriores
+
+### 2026-06-04 — Dashboard por bloque + vuelta a la cuenta del gasto
+
+Dos mejoras de uso pedidas por Javi:
+
+1. **Dashboard: reparto por bloque en vez de por categoría.** El donut agrupa ahora por bloque (Fijos, Comida, Variables…), con un **color fijo por bloque** (diccionario `BlockColors` en `Dashboard.razor`) reutilizado en la porción, el puntito de la leyenda y el borde del recuadro. Leyenda nativa de ApexCharts oculta; se renderiza una leyenda propia clicable. Al tocar un bloque —en la leyenda o en la porción del donut (`OnDataPointSelection`)— se despliega un recuadro con sus categorías y el gasto de cada una (barra proporcional). El detalle de categoría va a **dos líneas** (nombre + importe arriba, barra a lo ancho debajo) para que se vea bien en móvil sin cortar nombres. La evolución de 6 meses pasa a estar **debajo** del rosco.
+2. **Volver a la cuenta del gasto.** Al guardar (o cancelar) un gasto, `NewExpense` navega a `mes?accountId={cuenta}` y `MonthView` lee ese `accountId` (`[SupplyParameterFromQuery]`) para abrir la pestaña correcta. Antes siempre volvía a la personal (la vista de mes elegía `accounts.First()`).
 
 ### 2026-05-31 — Backlog QA: M2 cerrado, A2 medio hecho, A3 aparcado
 

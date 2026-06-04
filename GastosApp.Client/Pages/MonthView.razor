@@ -379,6 +379,11 @@ else
 </style>
 
 @code {
+    // Cuenta a preseleccionar al entrar, p. ej. al volver de guardar un gasto
+    // (?accountId={guid}). Si no viene o no existe, se usa la primera cuenta.
+    [SupplyParameterFromQuery(Name = "accountId")]
+    public Guid? PreselectedAccountId { get; set; }
+
     private bool isLoading = true;
     private string errorMessage = "";
 
@@ -456,7 +461,12 @@ else
             return;
         }
 
-        selectedAccountId = accounts.First().Id;
+        // Si la URL trae ?accountId={guid} y existe entre mis cuentas, lo usamos
+        // (volver de guardar un gasto). Si no, primera cuenta (personal).
+        var preselected = PreselectedAccountId.HasValue
+            ? accounts.FirstOrDefault(a => a.Id == PreselectedAccountId.Value)
+            : null;
+        selectedAccountId = preselected?.Id ?? accounts.First().Id;
 
         await LoadAllCategories();
         await LoadMonthData();
