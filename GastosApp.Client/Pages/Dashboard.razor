@@ -68,25 +68,69 @@ else
             }
         </div>
 
-        @* Tarta por categoría del mes actual *@
+        @* Tarta por bloque del mes actual *@
         <div class="chart-card mb-3">
-            <h6 class="chart-title">Reparto por categoría — @MonthLabel</h6>
-            @if (categoryBreakdown.Count == 0)
+            <h6 class="chart-title">Reparto por bloque — @MonthLabel</h6>
+            @if (blockBreakdown.Count == 0)
             {
                 <p class="text-muted small mb-0">No hay gastos este mes para repartir.</p>
             }
             else
             {
-                <ApexChart TItem="CategoryBucket"
+                <ApexChart TItem="BlockBucket"
                            @key="@($"pie-{selectedAccountId}")"
-                           Options="pieOptions">
-                    <ApexPointSeries TItem="CategoryBucket"
-                                     Items="categoryBreakdown"
+                           Options="pieOptions"
+                           OnDataPointSelection="OnBlockSliceSelected">
+                    <ApexPointSeries TItem="BlockBucket"
+                                     Items="blockBreakdown"
                                      Name="Gasto"
                                      SeriesType="SeriesType.Donut"
-                                     XValue='c => c.Name'
-                                     YValue="c => c.Total" />
+                                     XValue='b => b.Label'
+                                     YValue="b => b.Total" />
                 </ApexChart>
+
+                @* Leyenda clicable: cada color es un bloque *@
+                <div class="block-legend">
+                    @foreach (var b in blockBreakdown)
+                    {
+                        <button type="button"
+                                class="legend-item @(selectedBlockKey == b.Key ? "active" : "")"
+                                @onclick="() => ToggleBlock(b.Key)">
+                            <span class="legend-dot" style="background:@b.Color"></span>
+                            <span class="legend-label">@b.Label</span>
+                            <span class="legend-total">@FormatMoney(b.Total)</span>
+                        </button>
+                    }
+                </div>
+
+                @* Recuadro con las categorías del bloque seleccionado *@
+                @if (SelectedBlock is BlockBucket sel)
+                {
+                    <div class="block-detail" style="border-color:@sel.Color">
+                        <div class="block-detail-head">
+                            <span class="legend-dot" style="background:@sel.Color"></span>
+                            <span class="block-detail-title">@sel.Label</span>
+                            <span class="block-detail-total">@FormatMoney(sel.Total)</span>
+                        </div>
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var c in sel.Categories)
+                            {
+                                <li class="cat-row">
+                                    <span class="cat-name">@c.Name</span>
+                                    <span class="cat-bar-wrap">
+                                        <span class="cat-bar"
+                                              style="width:@Pct(c.Total, sel.Total)%; background:@sel.Color"></span>
+                                    </span>
+                                    <span class="cat-total">@FormatMoney(c.Total)</span>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted small mb-0 mt-2">Toca un bloque para ver sus categorías.</p>
+                }
             }
         </div>
     </div>
@@ -152,6 +196,96 @@ else
         color: #6c757d;
         margin: 0 0 8px;
     }
+
+    /* === Leyenda clicable de bloques === */
+    .block-legend {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 8px;
+    }
+
+    .legend-item {
+        display: grid;
+        grid-template-columns: 16px 1fr auto;
+        gap: 10px;
+        align-items: center;
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        background: transparent;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .legend-item:hover { background: #f1f3f5; }
+    .legend-item.active {
+        background: #f8f9fa;
+        border-color: #dee2e6;
+    }
+
+    .legend-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .legend-label { font-weight: 500; }
+    .legend-total { font-weight: 600; }
+
+    /* === Recuadro de categorías del bloque === */
+    .block-detail {
+        margin-top: 10px;
+        border: 1px solid #dee2e6;
+        border-left-width: 4px;
+        border-radius: 8px;
+        padding: 12px 14px;
+        background: #fcfcfd;
+    }
+
+    .block-detail-head {
+        display: grid;
+        grid-template-columns: 16px 1fr auto;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .block-detail-title { font-weight: 600; }
+    .block-detail-total { font-weight: 700; }
+
+    .cat-row {
+        display: grid;
+        grid-template-columns: minmax(90px, 1fr) 2fr auto;
+        gap: 10px;
+        align-items: center;
+        padding: 5px 0;
+    }
+
+    .cat-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .cat-bar-wrap {
+        background: #edf0f2;
+        border-radius: 6px;
+        height: 8px;
+        overflow: hidden;
+    }
+
+    .cat-bar {
+        display: block;
+        height: 100%;
+        border-radius: 6px;
+        min-width: 2px;
+    }
+
+    .cat-total { font-weight: 500; font-size: 0.9rem; }
 </style>
 
 @code {
@@ -168,7 +302,13 @@ else
     private decimal previousMonthTotal = 0m;
 
     private List<MonthBucket> last6Months = new();
-    private List<CategoryBucket> categoryBreakdown = new();
+    private List<BlockBucket> blockBreakdown = new();
+
+    // Bloque cuyo recuadro de categorías está abierto (null = ninguno).
+    private string? selectedBlockKey;
+
+    private BlockBucket? SelectedBlock =>
+        blockBreakdown.FirstOrDefault(b => b.Key == selectedBlockKey);
 
     private ApexChartOptions<MonthBucket> evolutionOptions = new()
     {
@@ -190,19 +330,15 @@ else
         }
     };
 
-    private ApexChartOptions<CategoryBucket> pieOptions = new()
+    // La leyenda nativa de ApexCharts va oculta: renderizamos nuestra propia
+    // leyenda clicable debajo (los colores se asignan por bloque en LoadData).
+    private ApexChartOptions<BlockBucket> pieOptions = new()
     {
         Chart = new Chart
         {
             FontFamily = "Helvetica Neue, Helvetica, Arial, sans-serif"
         },
-        Legend = new Legend { Position = LegendPosition.Bottom },
-        Colors = new List<string>
-        {
-            "#6366f1", "#8b5cf6", "#a855f7", "#ec4899",
-            "#f43f5e", "#f97316", "#eab308", "#10b981",
-            "#06b6d4", "#3b82f6"
-        },
+        Legend = new Legend { Show = false },
         DataLabels = new DataLabels
         {
             Enabled = true,
@@ -315,22 +451,79 @@ else
             .Where(e => e.ExpenseDate >= prevMonthStart && e.ExpenseDate < firstOfCurrentMonth)
             .Sum(e => e.Amount);
 
-        // === Tarta por categoría del mes actual ===
+        // === Reparto por bloque del mes actual ===
+        // Agrupamos primero por bloque (Fijos, Comida...) y, dentro de cada
+        // bloque, por categoría, para poder desplegar el detalle al hacer clic.
         var currentMonthExpenses = allExpenses
             .Where(e => e.ExpenseDate >= firstOfCurrentMonth && e.ExpenseDate < rangeEnd)
             .ToList();
 
-        categoryBreakdown = currentMonthExpenses
-            .GroupBy(e => e.CategoryId)
-            .Select(g => new CategoryBucket(
-                CategoryName(g.Key),
-                g.Sum(e => e.Amount)))
-            .OrderByDescending(c => c.Total)
+        blockBreakdown = currentMonthExpenses
+            .GroupBy(e => CategoryBlockKey(e.CategoryId))
+            .Select(g => new BlockBucket(
+                g.Key,
+                Blocks.Label(g.Key),
+                g.Sum(e => e.Amount),
+                BlockColor(g.Key),
+                g.GroupBy(e => e.CategoryId)
+                    .Select(cg => new CategoryBucket(CategoryName(cg.Key), cg.Sum(e => e.Amount)))
+                    .OrderByDescending(c => c.Total)
+                    .ToList()))
+            .OrderBy(b => Blocks.Order(b.Key))
             .ToList();
+
+        // Los colores del donut se toman de cada bloque, en el mismo orden que
+        // las porciones, para que coincidan con la leyenda y el recuadro.
+        pieOptions.Colors = blockBreakdown.Select(b => b.Color).ToList();
+
+        // Si el bloque que estaba abierto ya no tiene gastos, cerramos el recuadro.
+        if (selectedBlockKey is not null && SelectedBlock is null)
+            selectedBlockKey = null;
     }
 
     private string CategoryName(Guid? id) =>
         id is Guid g && categoryMap.TryGetValue(g, out var c) ? c.Name : "(sin categoría)";
+
+    // Clave de bloque de un gasto a partir de su categoría. Si la categoría no
+    // existe o no tiene bloque, lo agrupamos bajo un bloque "sin bloque".
+    private const string NoBlockKey = "(sin bloque)";
+
+    private string CategoryBlockKey(Guid? id) =>
+        id is Guid g && categoryMap.TryGetValue(g, out var c) && !string.IsNullOrEmpty(c.Block)
+            ? c.Block
+            : NoBlockKey;
+
+    // Color fijo por bloque, para que la porción del donut, el puntito de la
+    // leyenda y el borde del recuadro sean siempre del mismo color.
+    private static readonly Dictionary<string, string> BlockColors = new()
+    {
+        ["fijo"]       = "#6366f1",
+        ["comida"]     = "#10b981",
+        ["variable"]   = "#f97316",
+        ["minicompra"] = "#ec4899",
+        ["ocio"]       = "#8b5cf6",
+        ["inversion"]  = "#06b6d4",
+        ["individual"] = "#eab308",
+    };
+
+    private static string BlockColor(string key) =>
+        BlockColors.TryGetValue(key, out var c) ? c : "#94a3b8";
+
+    // Porcentaje (0-100) de una categoría dentro del total del bloque, para la barrita.
+    private static int Pct(decimal part, decimal whole) =>
+        whole <= 0 ? 0 : (int)Math.Round(part / whole * 100);
+
+    // Abre/cierra el recuadro de un bloque desde la leyenda.
+    private void ToggleBlock(string key) =>
+        selectedBlockKey = selectedBlockKey == key ? null : key;
+
+    // Clic directo en una porción del donut: abre el recuadro de ese bloque.
+    private void OnBlockSliceSelected(SelectedData<BlockBucket> data)
+    {
+        var idx = data.DataPointIndex;
+        if (idx >= 0 && idx < blockBreakdown.Count)
+            selectedBlockKey = blockBreakdown[idx].Key;
+    }
 
     private async Task SelectAccount(Guid accountId)
     {
@@ -342,7 +535,8 @@ else
         // entre el render anterior y el nuevo).
         selectedAccountId = accountId;
         last6Months = new();
-        categoryBreakdown = new();
+        blockBreakdown = new();
+        selectedBlockKey = null;
         currentMonthTotal = 0m;
         previousMonthTotal = 0m;
         StateHasChanged();
@@ -366,6 +560,17 @@ else
         }
     }
 
-    /// <summary>DTO local para la tarta de categorías.</summary>
+    /// <summary>Gasto de una categoría dentro de un bloque.</summary>
     public record CategoryBucket(string Name, decimal Total);
+
+    /// <summary>
+    /// Un bloque del reparto: total del bloque, su color y el desglose por
+    /// categoría que se muestra en el recuadro al hacer clic.
+    /// </summary>
+    public record BlockBucket(
+        string Key,
+        string Label,
+        decimal Total,
+        string Color,
+        List<CategoryBucket> Categories);
 }
