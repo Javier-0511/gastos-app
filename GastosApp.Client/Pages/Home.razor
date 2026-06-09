@@ -223,6 +223,10 @@ else
     private bool isChecking = true;
     private decimal monthTotal = 0;
 
+    // TODO: cuando entre Marta y queramos share_percent dinámico, leerlo de
+    // account_members. Por ahora mi parte en la cuenta compartida es 50%.
+    private const decimal MyShareInShared = 0.5m;
+
     private string Greeting => DateTime.Now.Hour switch
     {
         < 6  => "Buenas noches",
@@ -246,12 +250,23 @@ else
             return;
         }
 
-        // Resumen rápido: total gastado este mes (todas las cuentas).
+        // Resumen rápido: coste real del usuario este mes.
+        // La cuenta personal cuenta al 100%; la compartida solo mi parte (50%).
         try
         {
             var today = DateTime.Today;
             var expenses = await Expenses.GetByMonthAsync(today.Year, today.Month);
-            monthTotal = expenses.Sum(e => e.Amount);
+
+            // IDs de las cuentas compartidas, para saber a qué gasto aplicar el split.
+            var sharedAccountIds = accounts
+                .Where(a => a.IsShared)
+                .Select(a => a.Id)
+                .ToHashSet();
+
+            monthTotal = expenses.Sum(e =>
+                sharedAccountIds.Contains(e.AccountId)
+                    ? e.Amount * MyShareInShared
+                    : e.Amount);
         }
         catch
         {
