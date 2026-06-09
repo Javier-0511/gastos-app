@@ -7,6 +7,7 @@
 @inject AccountService Accounts
 @inject CategoryService CategorySvc
 @inject ExpenseService Expenses
+@inject BudgetService Budgets
 @inject NavigationManager Nav
 
 <PageTitle>Dashboard</PageTitle>
@@ -29,27 +30,46 @@ else
                      SelectedAccountId="selectedAccountId"
                      OnAccountSelected="SelectAccount" />
 
-        @* KPI: total mes actual + comparativa vs mes anterior *@
-        <div class="kpi-card mb-3">
-            <div class="kpi-label">Gastado este mes</div>
-            <div class="kpi-value">@FormatMoney(currentMonthTotal)</div>
-            <div class="kpi-diff @DiffClass">
+        @* Donut: gasto por bloque sobre el dinero disponible del mes *@
+        <div class="chart-card mb-3">
+            <h6 class="chart-title">Reparto del mes — @MonthLabel</h6>
+
+            @* Resumen: gastado, disponible y lo que queda *@
+            @if (disponibleTotal is decimal disp)
+            {
+                <div class="budget-summary">
+                    <span class="bs-spent">@FormatMoney(currentMonthTotal)</span>
+                    <span class="bs-of">de @FormatMoney(disp) disponibles</span>
+                    @if (Restante >= 0m)
+                    {
+                        <span class="bs-left positive">Te quedan @FormatMoney(Restante)</span>
+                    }
+                    else
+                    {
+                        <span class="bs-left negative">Te has pasado @FormatMoney(-Restante)</span>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-muted small mb-2">
+                    Define tu <strong>saldo inicial</strong> en la vista de mes para ver cuánto te queda disponible.
+                </p>
+            }
+
+            @* Comparación con el mes anterior *@
+            <p class="month-compare @DiffClass">
                 @if (previousMonthTotal == 0m)
                 {
                     <span>Sin datos del mes anterior</span>
                 }
                 else
                 {
-                    <span>@DiffArrow @FormatMoney(Math.Abs(currentMonthTotal - previousMonthTotal))</span>
-                    <span class="kpi-diff-extra">vs @FormatMoney(previousMonthTotal) en el mes anterior</span>
+                    <span>@DiffArrow @FormatMoney(Math.Abs(currentMonthTotal - previousMonthTotal)) vs mes anterior</span>
                 }
-            </div>
-        </div>
+            </p>
 
-        @* Tarta por bloque del mes actual *@
-        <div class="chart-card mb-3">
-            <h6 class="chart-title">Reparto por bloque — @MonthLabel</h6>
-            @if (blockBreakdown.Count == 0)
+            @if (donutSlices.Count == 0)
             {
                 <p class="text-muted small mb-0">No hay gastos este mes para repartir.</p>
             }
@@ -60,14 +80,14 @@ else
                            Options="pieOptions"
                            OnDataPointSelection="OnBlockSliceSelected">
                     <ApexPointSeries TItem="BlockBucket"
-                                     Items="blockBreakdown"
+                                     Items="donutSlices"
                                      Name="Gasto"
                                      SeriesType="SeriesType.Donut"
                                      XValue='b => b.Label'
                                      YValue="b => b.Total" />
                 </ApexChart>
 
-                @* Leyenda clicable: cada color es un bloque *@
+                @* Leyenda clicable: cada color es un bloque con gasto *@
                 <div class="block-legend">
                     @foreach (var b in blockBreakdown)
                     {
@@ -107,7 +127,7 @@ else
                         </ul>
                     </div>
                 }
-                else
+                else if (blockBreakdown.Count > 0)
                 {
                     <p class="text-muted small mb-0 mt-2">Toca un bloque para ver sus categorías.</p>
                 }
@@ -145,44 +165,15 @@ else
         padding: 16px;
     }
 
-    .kpi-card {
-        background: linear-gradient(135deg, var(--surface-dark) 0%, var(--surface-deep) 100%);
-        border-radius: 16px;
-        padding: 22px 24px;
-        color: white;
-        box-shadow: 0 10px 30px rgba(30, 27, 75, 0.25);
-    }
-
-    .kpi-label {
-        font-size: 0.85rem;
-        opacity: 0.7;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .kpi-value {
-        font-size: 2.2rem;
-        font-weight: 700;
-        margin-top: 4px;
-    }
-
-    .kpi-diff {
-        margin-top: 6px;
-        font-size: 0.95rem;
-        font-weight: 500;
-    }
-
-    .kpi-diff.up   { color: #fca5a5; }   /* sube = peor */
-    .kpi-diff.down { color: #86efac; }   /* baja = mejor */
-    .kpi-diff.flat { color: rgba(255,255,255,0.7); }
-
-    .kpi-diff-extra {
-        display: block;
-        margin-top: 2px;
+    /* Comparación con el mes anterior (línea bajo el resumen del rosco) */
+    .month-compare {
         font-size: 0.8rem;
-        font-weight: 400;
-        opacity: 0.7;
+        margin: 0 0 10px;
     }
+
+    .month-compare.up   { color: #ef4444; }   /* gastas más = peor */
+    .month-compare.down { color: #10b981; }   /* gastas menos = mejor */
+    .month-compare.flat { color: #6c757d; }
 
     .chart-card {
         background: white;
@@ -198,6 +189,35 @@ else
         color: #6c757d;
         margin: 0 0 8px;
     }
+
+    /* === Resumen gastado / disponible / restante === */
+    .budget-summary {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 4px 8px;
+        margin-bottom: 12px;
+    }
+
+    .budget-summary .bs-spent {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e1b4b;
+    }
+
+    .budget-summary .bs-of {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .budget-summary .bs-left {
+        margin-left: auto;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .budget-summary .bs-left.positive { color: #10b981; }
+    .budget-summary .bs-left.negative { color: #ef4444; }
 
     /* === Leyenda clicable de bloques === */
     .block-legend {
@@ -315,6 +335,21 @@ else
     private List<MonthBucket> last6Months = new();
     private List<BlockBucket> blockBreakdown = new();
 
+    // Presupuesto del mes para la cuenta activa (saldo inicial, aporte/nómina).
+    private MonthlyBudget? currentBudget;
+
+    // Dinero disponible este mes = saldo inicial + lo que entra.
+    // null = no se puede calcular (aún no hay saldo inicial definido).
+    private decimal? disponibleTotal;
+
+    // Porciones que se dibujan en el donut: los bloques con gasto + un trozo
+    // gris "Disponible" con lo que queda. Se separa de blockBreakdown para que
+    // la leyenda y el detalle por categorías sigan mostrando solo los bloques.
+    private List<BlockBucket> donutSlices = new();
+
+    // Lo que queda por gastar (puede ser negativo si te has pasado).
+    private decimal Restante => (disponibleTotal ?? 0m) - currentMonthTotal;
+
     // Bloque cuyo recuadro de categorías está abierto (null = ninguno).
     private string? selectedBlockKey;
 
@@ -347,6 +382,7 @@ else
     {
         Chart = new Chart
         {
+            Height = 240,
             FontFamily = "Helvetica Neue, Helvetica, Arial, sans-serif"
         },
         Legend = new Legend { Show = false },
@@ -483,13 +519,65 @@ else
             .OrderBy(b => Blocks.Order(b.Key))
             .ToList();
 
-        // Los colores del donut se toman de cada bloque, en el mismo orden que
+        // === Dinero disponible del mes (total del rosco) ===
+        // Leemos el presupuesto de la cuenta-mes (saldo inicial + aporte/nómina).
+        currentBudget = await Budgets.GetForMonthAsync(selectedAccountId, currentYear, currentMonth);
+        var account = accounts.First(a => a.Id == selectedAccountId);
+
+        // En la cuenta personal parte del dinero se va como aporte a la compartida,
+        // así que hay que restarlo. El aporte = mi parte (50%) del aporte conjunto
+        // de la compartida ese mes. Para la compartida este valor no se usa.
+        decimal aporteACompartida = 0m;
+        if (!account.IsShared)
+        {
+            var sharedAccount = accounts.FirstOrDefault(a => a.IsShared);
+            if (sharedAccount is not null)
+            {
+                var sharedBudget = await Budgets.GetForMonthAsync(sharedAccount.Id, currentYear, currentMonth);
+                aporteACompartida = SaldoCalculator.AporteACompartida(
+                    sharedBudget?.Amount ?? 0m, MyShareInShared);
+            }
+        }
+
+        disponibleTotal = ComputeDisponible(account, currentBudget, aporteACompartida);
+
+        // El donut parte de los bloques con gasto y, si hay disponible de sobra,
+        // le añadimos una porción gris "Disponible" con lo que queda.
+        donutSlices = new List<BlockBucket>(blockBreakdown);
+        if (Restante > 0m)
+        {
+            donutSlices.Add(new BlockBucket(
+                DisponibleKey, "Disponible", Restante, DisponibleColor, new List<CategoryBucket>()));
+        }
+
+        // Los colores del donut se toman de cada porción, en el mismo orden que
         // las porciones, para que coincidan con la leyenda y el recuadro.
-        pieOptions.Colors = blockBreakdown.Select(b => b.Color).ToList();
+        pieOptions.Colors = donutSlices.Select(b => b.Color).ToList();
 
         // Si el bloque que estaba abierto ya no tiene gastos, cerramos el recuadro.
         if (selectedBlockKey is not null && SelectedBlock is null)
             selectedBlockKey = null;
+    }
+
+    // Clave y color de la porción gris "Disponible" del donut.
+    private const string DisponibleKey = "(disponible)";
+    private const string DisponibleColor = "#e5e7eb";
+
+    // TODO: cuando entre Marta y queramos share_percent dinámico, leerlo de
+    // account_members. Por ahora mi parte en la cuenta compartida es 50%.
+    private const decimal MyShareInShared = 0.5m;
+
+    // Dinero disponible del mes = lo que te queda para gastar antes de gastar.
+    // - Compartida: saldo inicial + aporte conjunto.
+    // - Personal:  saldo inicial + nómina − aporte a la compartida.
+    // Así el hueco gris (disponible − gastos) coincide con el saldo final.
+    // Devuelve null si aún no hay saldo inicial definido (no se puede calcular).
+    private static decimal? ComputeDisponible(Account account, MonthlyBudget? budget, decimal aporteACompartida)
+    {
+        if (budget?.OpeningBalance is not decimal opening) return null;
+        return account.IsShared
+            ? opening + budget.Amount
+            : opening + (budget.Income ?? 0m) - aporteACompartida;
     }
 
     private string CategoryName(Guid? id) =>
@@ -547,6 +635,9 @@ else
         selectedAccountId = accountId;
         last6Months = new();
         blockBreakdown = new();
+        donutSlices = new();
+        disponibleTotal = null;
+        currentBudget = null;
         selectedBlockKey = null;
         currentMonthTotal = 0m;
         previousMonthTotal = 0m;
