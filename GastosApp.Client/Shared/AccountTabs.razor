@@ -9,17 +9,16 @@
 *@
 @using GastosApp.Client.Models
 
-<ul class="nav nav-tabs mb-3">
+<div class="segmented mb-3">
     @foreach (var acc in Accounts)
     {
-        <li class="nav-item">
-            <button class="nav-link @(SelectedAccountId == acc.Id ? "active" : "")"
-                    @onclick="() => OnAccountSelected.InvokeAsync(acc.Id)">
-                @acc.Name
-            </button>
-        </li>
+        <button type="button"
+                class="segmented-item @(SelectedAccountId == acc.Id ? "active" : "")"
+                @onclick="() => OnAccountSelected.InvokeAsync(acc.Id)">
+            @acc.Name
+        </button>
     }
-</ul>
+</div>
 
 @code {
     [Parameter, EditorRequired]

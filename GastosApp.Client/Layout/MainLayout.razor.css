@@ -1,37 +1,29 @@
-.page {
+/* Estructura general de la app: en móvil una columna (contenido + barra
+   inferior fija); en escritorio dos columnas (sidebar + contenido). */
+.app-shell {
     position: relative;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    min-height: 100dvh;
 }
 
-main {
+.app-main {
     flex: 1;
-}
-
-.sidebar {
-    background: linear-gradient(180deg, var(--surface-dark) 0%, var(--surface-deep) 100%);
-}
-
-/* En login (sin sidebar) el main ocupa todo el ancho */
-.page.no-sidebar main {
     width: 100%;
+    /* La "gutter" (margen lateral) vive aquí, en el layout, no en cada página. */
+    padding: calc(env(safe-area-inset-top) + 10px) 16px
+             calc(var(--bottom-nav-h) + env(safe-area-inset-bottom) + 28px) 16px;
 }
 
-@media (min-width: 641px) {
-    .page {
-        flex-direction: row;
-    }
+/* En login (sin navegación) la página ocupa todo, sin reservar hueco. */
+.no-nav .app-main { padding: 0; }
 
-    .sidebar {
-        width: 250px;
-        height: 100vh;
-        position: sticky;
-        top: 0;
-    }
+@media (min-width: 768px) {
+    .app-shell { flex-direction: row; }
 
-    article {
-        padding-left: 2rem !important;
-        padding-right: 1.5rem !important;
+    .app-main {
+        padding: 16px 24px 32px;
+        min-width: 0;   /* permite que el contenido encoja dentro del flex */
     }
 }

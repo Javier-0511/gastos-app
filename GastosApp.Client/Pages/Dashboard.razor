@@ -162,7 +162,12 @@ else
     .container-narrow {
         max-width: 700px;
         margin: 0 auto;
-        padding: 16px;
+    }
+
+    .container-narrow > h2 {
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: 16px;
     }
 
     /* Comparación con el mes anterior (línea bajo el resumen del rosco) */
@@ -171,23 +176,25 @@ else
         margin: 0 0 10px;
     }
 
-    .month-compare.up   { color: #ef4444; }   /* gastas más = peor */
-    .month-compare.down { color: #10b981; }   /* gastas menos = mejor */
-    .month-compare.flat { color: #6c757d; }
+    .month-compare.up   { color: var(--negative); }   /* gastas más = peor */
+    .month-compare.down { color: var(--positive); }   /* gastas menos = mejor */
+    .month-compare.flat { color: var(--text-dim); }
 
     .chart-card {
-        background: white;
-        border: 1px solid #dee2e6;
-        border-radius: 12px;
-        padding: 16px 18px;
+        background: var(--surface-1);
+        border: 1px solid var(--border);
+        border-radius: var(--r-md);
+        box-shadow: var(--shadow-sm);
+        padding: 18px 18px 10px;
     }
 
     .chart-title {
-        font-size: 0.85rem;
+        font-size: 0.72rem;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        color: #6c757d;
-        margin: 0 0 8px;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        font-weight: 700;
+        margin: 0 0 10px;
     }
 
     /* === Resumen gastado / disponible / restante === */
@@ -200,24 +207,26 @@ else
     }
 
     .budget-summary .bs-spent {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e1b4b;
+        font-size: 1.7rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
     }
 
     .budget-summary .bs-of {
-        color: #6c757d;
+        color: var(--text-muted);
         font-size: 0.9rem;
     }
 
     .budget-summary .bs-left {
         margin-left: auto;
-        font-weight: 600;
+        font-weight: 700;
         font-size: 0.9rem;
     }
 
-    .budget-summary .bs-left.positive { color: #10b981; }
-    .budget-summary .bs-left.negative { color: #ef4444; }
+    .budget-summary .bs-left.positive { color: var(--positive); }
+    .budget-summary .bs-left.negative { color: var(--negative); }
 
     /* === Leyenda clicable de bloques === */
     .block-legend {
@@ -233,19 +242,20 @@ else
         gap: 10px;
         align-items: center;
         width: 100%;
-        padding: 8px 10px;
+        padding: 9px 10px;
         border: 1px solid transparent;
-        border-radius: 8px;
+        border-radius: var(--r-sm);
         background: transparent;
         text-align: left;
         cursor: pointer;
+        color: var(--text);
         transition: background 0.15s ease, border-color 0.15s ease;
     }
 
-    .legend-item:hover { background: #f1f3f5; }
+    .legend-item:hover { background: var(--surface-2); }
     .legend-item.active {
-        background: #f8f9fa;
-        border-color: #dee2e6;
+        background: var(--surface-2);
+        border-color: var(--border-strong);
     }
 
     .legend-dot {
@@ -256,16 +266,16 @@ else
     }
 
     .legend-label { font-weight: 500; }
-    .legend-total { font-weight: 600; }
+    .legend-total { font-weight: 700; font-variant-numeric: tabular-nums; }
 
     /* === Recuadro de categorías del bloque === */
     .block-detail {
         margin-top: 10px;
-        border: 1px solid #dee2e6;
+        border: 1px solid var(--border);
         border-left-width: 4px;
-        border-radius: 8px;
+        border-radius: var(--r-sm);
         padding: 12px 14px;
-        background: #fcfcfd;
+        background: var(--surface-2);
     }
 
     .block-detail-head {
@@ -276,8 +286,8 @@ else
         margin-bottom: 10px;
     }
 
-    .block-detail-title { font-weight: 600; }
-    .block-detail-total { font-weight: 700; }
+    .block-detail-title { font-weight: 700; }
+    .block-detail-total { font-weight: 800; font-variant-numeric: tabular-nums; }
 
     /* Cada categoría en dos líneas: nombre + importe arriba, barra a lo ancho
        debajo. Encaja bien en móvil y evita que el nombre se corte. */
@@ -298,12 +308,13 @@ else
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        color: var(--text);
     }
 
     .cat-bar-wrap {
         display: block;
         width: 100%;
-        background: #edf0f2;
+        background: var(--surface-3);
         border-radius: 6px;
         height: 8px;
         overflow: hidden;
@@ -316,7 +327,7 @@ else
         min-width: 2px;
     }
 
-    .cat-total { font-weight: 500; font-size: 0.9rem; }
+    .cat-total { font-weight: 600; font-size: 0.9rem; font-variant-numeric: tabular-nums; }
 </style>
 
 @code {
@@ -361,15 +372,19 @@ else
         Chart = new Chart
         {
             Toolbar = new Toolbar { Show = false },
-            FontFamily = "Helvetica Neue, Helvetica, Arial, sans-serif"
+            Background = "transparent",
+            ForeColor = "#9aa0b0",
+            FontFamily = "Inter, system-ui, 'Helvetica Neue', Helvetica, Arial, sans-serif"
         },
-        Colors = new List<string> { "#6366f1" },
+        Theme = new Theme { Mode = Mode.Dark },
+        Colors = new List<string> { "#818cf8" },
         PlotOptions = new PlotOptions
         {
-            Bar = new PlotOptionsBar { BorderRadius = 6, ColumnWidth = "55%" }
+            Bar = new PlotOptionsBar { BorderRadius = 8, ColumnWidth = "52%" }
         },
         DataLabels = new DataLabels { Enabled = false },
-        Grid = new Grid { BorderColor = "#e9ecef" },
+        Grid = new Grid { BorderColor = "rgba(255,255,255,0.08)" },
+        Tooltip = new Tooltip { Theme = Mode.Dark },
         Yaxis = new List<YAxis>
         {
             new YAxis { Labels = new YAxisLabels { Formatter = "function (v) { return v.toLocaleString('es-ES') + ' €'; }" } }
@@ -382,10 +397,16 @@ else
     {
         Chart = new Chart
         {
-            Height = 240,
-            FontFamily = "Helvetica Neue, Helvetica, Arial, sans-serif"
+            Height = 250,
+            Background = "transparent",
+            ForeColor = "#9aa0b0",
+            FontFamily = "Inter, system-ui, 'Helvetica Neue', Helvetica, Arial, sans-serif"
         },
+        Theme = new Theme { Mode = Mode.Dark },
         Legend = new Legend { Show = false },
+        // Separación fina entre porciones, del color de la tarjeta.
+        Stroke = new Stroke { Colors = new List<string> { "#15151f" }, Width = 2 },
+        Tooltip = new Tooltip { Theme = Mode.Dark },
         DataLabels = new DataLabels
         {
             Enabled = true,
@@ -561,7 +582,7 @@ else
 
     // Clave y color de la porción gris "Disponible" del donut.
     private const string DisponibleKey = "(disponible)";
-    private const string DisponibleColor = "#e5e7eb";
+    private const string DisponibleColor = "#3a3a4a";
 
     // TODO: cuando entre Marta y queramos share_percent dinámico, leerlo de
     // account_members. Por ahora mi parte en la cuenta compartida es 50%.

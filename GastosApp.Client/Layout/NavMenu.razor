@@ -1,49 +1,69 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Gastos</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-</div>
+@* Navegación de la app. Renderiza dos variantes; el CSS (NavMenu.razor.css)
+   decide cuál se ve según el ancho:
+     - Sidebar vertical en escritorio (≥768px).
+     - Barra inferior fija con botón "+" central en móvil (<768px).
+   Los iconos son SVG inline con fill="currentColor", así heredan el color del
+   enlace y la pestaña activa se tiñe de índigo automáticamente. *@
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="nuevo-gasto">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Nuevo gasto
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="dashboard">
-                <span class="bi bi-bar-chart-fill-nav-menu" aria-hidden="true"></span> Dashboard
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="mes">
-                <span class="bi bi-calendar3-nav-menu" aria-hidden="true"></span> Vista del mes
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="categorias">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Categorías
-            </NavLink>
-        </div>
+@* ======================= SIDEBAR (escritorio) ======================= *@
+<aside class="sidebar">
+    <a class="sidebar-brand" href="">
+        <img src="icon.svg" alt="" class="sidebar-logo" />
+        <span>Gastos</span>
+    </a>
+    <nav class="sidebar-nav">
+        <NavLink class="side-link" href="" Match="NavLinkMatch.All">
+            <span class="side-ico">@IconHome</span><span>Inicio</span>
+        </NavLink>
+        <NavLink class="side-link" href="mes">
+            <span class="side-ico">@IconCalendar</span><span>Vista del mes</span>
+        </NavLink>
+        <NavLink class="side-link" href="nuevo-gasto">
+            <span class="side-ico">@IconPlus</span><span>Nuevo gasto</span>
+        </NavLink>
+        <NavLink class="side-link" href="dashboard">
+            <span class="side-ico">@IconChart</span><span>Dashboard</span>
+        </NavLink>
+        <NavLink class="side-link" href="categorias">
+            <span class="side-ico">@IconTags</span><span>Categorías</span>
+        </NavLink>
     </nav>
-</div>
+</aside>
+
+@* ===================== BARRA INFERIOR (móvil) ===================== *@
+<nav class="bottom-nav">
+    <NavLink class="bn-item" href="" Match="NavLinkMatch.All">
+        <span class="bn-ico">@IconHome</span><span class="bn-label">Inicio</span>
+    </NavLink>
+    <NavLink class="bn-item" href="mes">
+        <span class="bn-ico">@IconCalendar</span><span class="bn-label">Mes</span>
+    </NavLink>
+
+    <a class="bn-fab" href="nuevo-gasto" aria-label="Nuevo gasto">@IconPlus</a>
+
+    <NavLink class="bn-item" href="dashboard">
+        <span class="bn-ico">@IconChart</span><span class="bn-label">Dashboard</span>
+    </NavLink>
+    <NavLink class="bn-item" href="categorias">
+        <span class="bn-ico">@IconTags</span><span class="bn-label">Categorías</span>
+    </NavLink>
+</nav>
 
 @code {
-    private bool collapseNavMenu = true;
+    // Iconos como MarkupString para reutilizarlos en sidebar y barra sin duplicar
+    // el SVG. El tamaño va en los atributos width/height; el color lo heredan.
+    private MarkupString IconHome => (MarkupString)
+        @"<svg width=""22"" height=""22"" fill=""currentColor"" viewBox=""0 0 16 16""><path d=""M6.5 14.5v-3.505c0-.245.25-.495.5-.495h2c.25 0 .5.25.5.5v3.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4a.5.5 0 0 0 .5-.5Z""/></svg>";
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private MarkupString IconCalendar => (MarkupString)
+        @"<svg width=""22"" height=""22"" fill=""currentColor"" viewBox=""0 0 16 16""><path d=""M14 0H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zM1 3.857C1 3.384 1.448 3 2 3h12c.552 0 1 .384 1 .857v10.286c0 .473-.448.857-1 .857H2c-.552 0-1-.384-1-.857V3.857z""/><path d=""M6.5 7a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-9 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-9 3a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm3 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0z""/></svg>";
 
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
+    private MarkupString IconChart => (MarkupString)
+        @"<svg width=""22"" height=""22"" fill=""currentColor"" viewBox=""0 0 16 16""><path d=""M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1z""/></svg>";
+
+    private MarkupString IconTags => (MarkupString)
+        @"<svg width=""22"" height=""22"" fill=""currentColor"" viewBox=""0 0 16 16""><path d=""M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1H2zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z""/></svg>";
+
+    private MarkupString IconPlus => (MarkupString)
+        @"<svg width=""26"" height=""26"" viewBox=""0 0 24 24"" fill=""none"" stroke=""currentColor"" stroke-width=""2.5"" stroke-linecap=""round""><path d=""M12 5v14M5 12h14""/></svg>";
 }

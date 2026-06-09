@@ -25,10 +25,10 @@ else
     <div class="container-narrow stagger">
 
         @* Selector de mes *@
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <button class="btn btn-outline-secondary" @onclick="PreviousMonth">◀</button>
+        <div class="month-nav">
+            <button class="btn nav-btn" @onclick="PreviousMonth" aria-label="Mes anterior">◀</button>
             <h4 class="m-0 text-capitalize">@MonthLabel</h4>
-            <button class="btn btn-outline-secondary" @onclick="NextMonth">▶</button>
+            <button class="btn nav-btn" @onclick="NextMonth" aria-label="Mes siguiente">▶</button>
         </div>
 
         @* Botón añadir gasto rápido (preselecciona la cuenta activa) *@
@@ -80,14 +80,14 @@ else
 
                 <div class="balance-row">
                     <span class="balance-label">Gastos del mes</span>
-                    <span class="balance-value text-danger">−@FormatMoney(currentTotal)</span>
+                    <span class="balance-value negative">−@FormatMoney(currentTotal)</span>
                 </div>
 
                 <hr class="my-2"/>
 
-                <div class="balance-row">
+                <div class="balance-row balance-final">
                     <span class="balance-label fw-bold">Saldo final</span>
-                    <span class="balance-value fw-bold @(SaldoFinal() < 0 ? "text-danger" : "text-success")">
+                    <span class="balance-value money @(SaldoFinal() < 0 ? "negative" : "positive")">
                         @(SaldoFinal() is decimal sf1 ? FormatMoney(sf1) : "—")
                     </span>
                 </div>
@@ -126,19 +126,19 @@ else
                         Aporte a compartida
                         <small class="text-muted">(50% de @FormatMoney(sharedAmount))</small>
                     </span>
-                    <span class="balance-value text-danger">−@FormatMoney(AporteACompartida())</span>
+                    <span class="balance-value negative">−@FormatMoney(AporteACompartida())</span>
                 </div>
 
                 <div class="balance-row">
                     <span class="balance-label">Gastos personales</span>
-                    <span class="balance-value text-danger">−@FormatMoney(currentTotal)</span>
+                    <span class="balance-value negative">−@FormatMoney(currentTotal)</span>
                 </div>
 
                 <hr class="my-2"/>
 
-                <div class="balance-row">
+                <div class="balance-row balance-final">
                     <span class="balance-label fw-bold">Saldo final</span>
-                    <span class="balance-value fw-bold @(SaldoFinal() < 0 ? "text-danger" : "text-success")">
+                    <span class="balance-value money @(SaldoFinal() < 0 ? "negative" : "positive")">
                         @(SaldoFinal() is decimal sf2 ? FormatMoney(sf2) : "—")
                     </span>
                 </div>
@@ -271,14 +271,44 @@ else
     .container-narrow {
         max-width: 600px;
         margin: 0 auto;
-        padding: 16px;
     }
 
+    /* Cabecera de mes: botones redondos a los lados */
+    .month-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+    .month-nav h4 {
+        font-weight: 800;
+        font-size: 1.2rem;
+        letter-spacing: -0.01em;
+    }
+    .nav-btn {
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        border: 1px solid var(--border-strong);
+        background: var(--surface-1);
+        color: var(--text-muted);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .nav-btn:hover { background: var(--surface-2); color: var(--text); }
+
+    /* Tarjeta de saldos */
     .balance-card {
-        background: white;
-        border: 1px solid #dee2e6;
-        border-radius: 12px;
-        padding: 16px 18px;
+        background: var(--surface-1);
+        border: 1px solid var(--border);
+        border-radius: var(--r-md);
+        box-shadow: var(--shadow-sm);
+        padding: 18px 20px;
+    }
+    .balance-card hr {
+        border-color: var(--border);
+        opacity: 1;
     }
 
     .balance-row {
@@ -286,93 +316,98 @@ else
         grid-template-columns: 1fr auto auto;
         gap: 12px;
         align-items: center;
-        padding: 4px 0;
+        padding: 6px 0;
+    }
+    .balance-label { color: var(--text-muted); font-size: 0.92rem; }
+    .balance-value {
+        font-weight: 600;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
     }
 
-    .balance-label { color: #6c757d; }
-    .balance-value { font-weight: 500; text-align: right; }
+    /* Fila del saldo final, destacada */
+    .balance-final .balance-label { color: var(--text); font-size: 1.02rem; }
+    .balance-final .balance-value { font-size: 1.18rem; }
 
+    /* Tarjetas de bloque (desplegables) */
     .block-card {
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
+        border: 1px solid var(--border);
+        border-radius: var(--r-md);
         overflow: hidden;
-        background: white;
+        background: var(--surface-1);
+        margin-bottom: 10px;
     }
 
     .block-header {
         width: 100%;
         display: grid;
         grid-template-columns: 24px 1fr auto auto;
-        gap: 8px;
+        gap: 10px;
         align-items: center;
-        padding: 12px 14px;
-        background: #f8f9fa;
+        padding: 13px 16px;
+        background: transparent;
         border: none;
         text-align: left;
         cursor: pointer;
+        color: var(--text);
+        transition: background 0.15s ease;
     }
-
-    .block-header:hover { background: #e9ecef; }
+    .block-header:hover { background: var(--surface-2); }
 
     .block-arrow {
-        color: #6c757d;
+        color: var(--text-dim);
         font-size: 0.9rem;
         transition: transform 0.2s ease-out;
         display: inline-block;
     }
     .block-arrow.expanded { transform: rotate(90deg); }
 
-    /* Truco moderno para animar height: auto.
-       grid-template-rows interpola entre 0fr y 1fr → el hijo se "extiende"
-       suavemente desde alto 0 hasta su alto natural. min-height: 0 en el
-       hijo es necesario para que el grid pueda comprimirlo a 0. */
+    /* Truco para animar height:auto → grid-template-rows interpola 0fr↔1fr. */
     .block-content-wrap {
         display: grid;
         grid-template-rows: 0fr;
         transition: grid-template-rows 0.25s ease-out;
     }
-    .block-content-wrap.expanded {
-        grid-template-rows: 1fr;
-    }
-    .block-content {
-        overflow: hidden;
-        min-height: 0;
-    }
-    .block-name  { font-weight: 600; }
-    .block-count {
-        background: #dee2e6;
-        border-radius: 10px;
-        padding: 2px 8px;
-        font-size: 0.8rem;
-    }
-    .block-total { font-weight: 600; }
+    .block-content-wrap.expanded { grid-template-rows: 1fr; }
+    .block-content { overflow: hidden; min-height: 0; }
 
-    .block-empty { padding: 10px 14px; }
+    .block-name { font-weight: 700; }
+    .block-count {
+        background: var(--surface-3);
+        color: var(--text-muted);
+        border-radius: var(--r-pill);
+        padding: 2px 9px;
+        font-size: 0.78rem;
+        font-weight: 600;
+    }
+    .block-total { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+    .block-empty { padding: 10px 16px; }
 
     .expense-row {
         display: grid;
         grid-template-columns: 1fr auto;
         gap: 8px;
-        padding: 10px 14px;
-        border-top: 1px solid #f0f0f0;
+        padding: 12px 16px;
+        border-top: 1px solid var(--border);
         align-items: center;
     }
 
     .expense-main { min-width: 0; }
     .expense-title {
-        font-weight: 500;
+        font-weight: 600;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .expense-meta { font-size: 0.8rem; }
-    .expense-amount { font-weight: 600; }
+    .expense-meta { font-size: 0.8rem; color: var(--text-dim); }
+    .expense-amount { font-weight: 700; font-variant-numeric: tabular-nums; }
 
     .expense-actions {
         grid-column: 1 / -1;
         display: flex;
         gap: 6px;
-        margin-top: 4px;
+        margin-top: 6px;
     }
 
     /* .modal-backdrop-custom y .modal-card viven en app.css (global) */

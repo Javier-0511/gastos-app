@@ -4,33 +4,28 @@
 @inject AuthService Auth
 @inject NavigationManager Nav
 
-<div class="page @(Auth.IsLoggedIn ? "" : "no-sidebar")">
+<div class="app-shell @(Auth.IsLoggedIn ? "" : "no-nav")">
     @if (Auth.IsLoggedIn)
     {
-        <div class="sidebar">
-            <NavMenu />
-        </div>
+        @* NavMenu renderiza sidebar (escritorio) Y barra inferior (móvil);
+           el CSS muestra una u otra según el ancho de pantalla. *@
+        <NavMenu />
     }
 
-    <main>
-        <article class="content px-4">
-            @* Wrapper interno con @key vinculado a la URL: cada navegación
-               destruye este div y lo recrea, reactivando la animación CSS.
-               Lo separamos del article para que el transform de la animación
-               no afecte al padding del layout. *@
-            <div class="page-enter" @key="@Nav.Uri">
-                @Body
-            </div>
-        </article>
+    <main class="app-main">
+        @* Wrapper interno con @key vinculado a la URL: cada navegación
+           destruye este div y lo recrea, reactivando la animación CSS. *@
+        <div class="page-enter" @key="@Nav.Uri">
+            @Body
+        </div>
     </main>
 </div>
 
 @code {
     protected override void OnInitialized()
     {
-        // Solo suscribimos al cambio de sesión (login/logout) para mostrar
-        // u ocultar el sidebar. La navegación entre rutas la maneja Blazor
-        // automáticamente: el @key del div interior se reanima solo.
+        // Solo nos suscribimos al cambio de sesión (login/logout) para mostrar
+        // u ocultar la navegación. El cambio de ruta lo maneja Blazor solo.
         Auth.OnAuthStateChanged += HandleAuthChanged;
     }
 

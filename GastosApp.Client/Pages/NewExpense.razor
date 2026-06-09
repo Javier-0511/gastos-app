@@ -140,20 +140,42 @@ else
     .container-narrow {
         max-width: 500px;
         margin: 0 auto;
-        padding: 16px;
     }
 
+    .container-narrow > h2 {
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: 16px;
+    }
+
+    /* Importe: número gigante protagonista, sin caja */
     .amount-group {
-        max-width: 280px;
+        max-width: 300px;
         margin: 0 auto;
     }
-
-    .amount-input {
-        font-size: 2.5rem;
-        text-align: right;
-        font-weight: 600;
+    .amount-group .input-group-text {
+        background: transparent;
+        border: none;
+        font-size: 1.6rem;
+        color: var(--text-muted);
     }
+    .amount-input {
+        font-size: 2.8rem;
+        text-align: right;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+    }
+    /* Quitamos las flechitas del input numérico */
+    .amount-input::-webkit-outer-spin-button,
+    .amount-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .amount-input { -moz-appearance: textfield; }
 
+    /* Chips de categoría */
     .chips-row {
         display: flex;
         flex-wrap: wrap;
@@ -161,23 +183,27 @@ else
     }
 
     .chip {
-        padding: 8px 16px;
-        border-radius: 20px;
-        border: 1.5px solid #ced4da;
-        background: white;
-        font-size: 0.95rem;
+        padding: 9px 16px;
+        border-radius: var(--r-pill);
+        border: 1px solid var(--border-strong);
+        background: var(--surface-2);
+        color: var(--text-muted);
+        font-size: 0.92rem;
+        font-weight: 600;
         cursor: pointer;
         transition: all 0.15s ease;
     }
 
     .chip:hover {
         border-color: var(--accent);
+        color: var(--text);
     }
 
     .chip-selected {
-        background: var(--accent);
-        color: white;
-        border-color: var(--accent);
+        background-image: var(--accent-gradient);
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
         animation: chip-bounce 0.3s ease-out;
     }
 </style>

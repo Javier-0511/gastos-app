@@ -6,44 +6,74 @@
 
 <PageTitle>Configuración inicial</PageTitle>
 
-<div class="container stagger" style="max-width: 500px; margin-top: 60px;">
+<div class="setup-wrap stagger">
     @if (isLoading)
     {
         <p>Cargando...</p>
     }
     else
     {
-        <h2>¡Bienvenido!</h2>
-        <p>Vamos a crear tus dos cuentas para empezar. Puedes cambiar los nombres si quieres.</p>
+        <div class="setup-logo">
+            <img src="icon.svg" alt="" />
+        </div>
+        <h2 class="setup-title">¡Bienvenido!</h2>
+        <p class="text-muted">Vamos a crear tus dos cuentas para empezar. Puedes cambiar los nombres si quieres.</p>
 
-        @if (!hasPersonal)
-        {
-            <div class="mb-3">
-                <label class="form-label">Cuenta personal</label>
-                <input class="form-control" @bind="personalName" @bind:event="oninput" />
-                <small class="text-muted">Para gastos que pagas con tu tarjeta personal.</small>
-            </div>
-        }
+        <div class="surface-card setup-card">
+            @if (!hasPersonal)
+            {
+                <div class="mb-3">
+                    <label class="form-label">Cuenta personal</label>
+                    <input class="form-control" @bind="personalName" @bind:event="oninput" />
+                    <small class="text-muted">Para gastos que pagas con tu tarjeta personal.</small>
+                </div>
+            }
 
-        @if (!hasShared)
-        {
-            <div class="mb-3">
-                <label class="form-label">Cuenta compartida</label>
-                <input class="form-control" @bind="sharedName" @bind:event="oninput" />
-                <small class="text-muted">Para gastos pagados con la tarjeta compartida (50/50 con Marta).</small>
-            </div>
-        }
+            @if (!hasShared)
+            {
+                <div class="mb-3">
+                    <label class="form-label">Cuenta compartida</label>
+                    <input class="form-control" @bind="sharedName" @bind:event="oninput" />
+                    <small class="text-muted">Para gastos pagados con la tarjeta compartida (50/50 con Marta).</small>
+                </div>
+            }
 
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <div class="alert alert-danger">@errorMessage</div>
-        }
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
 
-        <button class="btn btn-primary w-100" @onclick="HandleCreate" disabled="@(!IsValid)">
-            Crear mis cuentas
-        </button>
+            <button class="btn btn-primary btn-lg w-100" @onclick="HandleCreate" disabled="@(!IsValid)">
+                Crear mis cuentas
+            </button>
+        </div>
     }
 </div>
+
+<style>
+    .setup-wrap {
+        max-width: 460px;
+        margin: 0 auto;
+        padding-top: 24px;
+        text-align: center;
+    }
+    .setup-logo img {
+        width: 72px;
+        height: 72px;
+        filter: drop-shadow(0 8px 22px var(--accent-glow));
+        margin-bottom: 10px;
+    }
+    .setup-title {
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin: 0 0 6px;
+    }
+    .setup-card {
+        padding: 22px;
+        margin-top: 20px;
+        text-align: left;
+    }
+</style>
 
 @code {
     private string personalName = "Personal";

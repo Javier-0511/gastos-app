@@ -125,7 +125,7 @@ Equivalente al H15/H16 del Excel.
     - Icono SVG propio: gráfico de barras ascendentes con línea conectora y punto, sobre el gradiente. Sustituye al icono Blazor.
     - Sidebar oculto cuando no estás logueado (MainLayout suscrito a `AuthService.OnAuthStateChanged`).
     - Limpieza: link "About" eliminado, `sample-data/weather.json` y PNGs del template borrados.
-- [ ] Modo oscuro.
+- [x] **Modo oscuro** (2026-06-09): no es un toggle, sino el rediseño completo de la app a un tema oscuro permanente estilo banca premium. Ver entrada abajo.
 - [x] Animaciones/transiciones suaves.
     - Fade-in al navegar entre páginas (wrapper interno con `@key="@Nav.Uri"` en MainLayout).
     - Modales con pop-in (escala + fade) — ConfirmModal y modales inline de `/mes`.
@@ -176,6 +176,7 @@ Equivalente al H15/H16 del Excel.
 | Onboarding | Pantalla única, no wizard de 3 pasos | Más simple y rápido para algo que se hace una sola vez |
 | Categorías iniciales | NO se crean en setup | Setup mínimo; se gestionan desde su propia pantalla cuando toque |
 | SQL de RLS | Versionado en `supabase/policies.sql` | Reproducible en otros entornos sin re-descubrir el bug del RETURNING |
+| Estética (2026-06-09) | Tema oscuro permanente "Nocturne" + barra de navegación inferior + Inter, todo sobre tokens CSS en `app.css` | App de uso mayoritariamente móvil; look de banca premium; un sistema de tokens evita colores sueltos y facilita cambios globales |
 
 ---
 
@@ -214,6 +215,21 @@ Ninguno. (Mayor exposición teóricacorrige: toda la seguridad depende de RLS �
 ---
 
 ## Cambios y notas posteriores
+
+### 2026-06-09 — Rediseño visual completo: tema oscuro "Nocturne" + navegación inferior
+
+Restyle integral de toda la app a una estética de banca premium (referencia: Revolut), pensada para uso mayoritario en móvil. Decisiones tomadas con Javi: tema **oscuro permanente**, navegación **barra inferior + botón "+" central**, acento **índigo** (se mantiene la identidad), tipografía **Inter** (Google Fonts).
+
+- **Sistema de diseño (tokens) en `wwwroot/css/app.css`.** Una sola fuente de verdad con variables CSS: acento (`--accent*`, `--accent-gradient`), superficies (`--bg`, `--surface-1/2/3`), texto (`--text`, `--text-muted`, `--text-dim`), semánticos (`--positive` verde, `--negative` coral), radios (`--r-sm/md/lg/pill`), sombras y espaciado. **Norma**: cualquier pantalla nueva debe usar estos tokens, no colores sueltos.
+- **Tema oscuro vía Bootstrap 5.3.** `data-bs-theme="dark"` en `index.html` + puente que mapea los tokens a las variables `--bs-*`, así inputs/selects/modales/cards/alerts adoptan el oscuro sin reescribir cada componente.
+- **Navegación nueva (`NavMenu.razor`).** Un solo componente renderiza dos variantes y el CSS elige por ancho (corte en 768px): en móvil **barra inferior fija con efecto cristal** (blur) y **FAB "+" central** que va a `nuevo-gasto`; en escritorio **sidebar oscuro** con la marca y enlaces tipo píldora. Iconos como SVG inline (`MarkupString`) con `fill="currentColor"` para que la pestaña activa se tiña sola. `MainLayout` reserva hueco inferior en móvil (`--bottom-nav-h` + safe-area).
+    - **Gotcha aprendido**: los estilos de navegación viven en `app.css` (**global**), no en `NavMenu.razor.css`. El CSS aislado (*scoped*) solo alcanza los elementos HTML escritos en el propio componente; el `<a>` que renderiza un `<NavLink>` queda fuera salvo que uses `::deep`. Por eso el FAB (un `<a>` normal) sí se estilaba pero los `NavLink` salían como links subrayados. Solución: navegación en el global.
+- **Componentes reutilizables** en `app.css`: `.surface-card`, `.section-label`, `.money` (cifras tabulares), `.segmented`/`.segmented-item`. `AccountTabs` pasa de `nav-tabs` de Bootstrap a un **control segmentado** tipo iOS.
+- **Pantallas restyleadas**: Home (tarjeta-resumen con degradado índigo como héroe), Vista del mes (cabecera con botones redondos, saldos con color semántico), Dashboard (tarjetas oscuras + **ApexCharts en modo oscuro**: `Chart.Background="transparent"`, `ForeColor`, `Theme.Mode=Mode.Dark`, `Tooltip.Theme=Mode.Dark`, stroke entre porciones), Nuevo gasto (importe como número gigante sin caja, chips con degradado), Categorías, Login (fondo con halo índigo), Setup (pantalla de bienvenida con tarjeta) y NotFound.
+- **Detalle ApexCharts**: ojo, `Tooltip.Theme` es de tipo `Mode?` (enum), **no** un string — usar `Mode.Dark`, no `"dark"`.
+- PWA: `theme_color`/`background_color` del manifest y `theme-color` del HTML pasados a `#0b0b12` para evitar flash blanco al abrir.
+
+Build verde (0 warnings, 0 errores). Pendiente de verificación visual en navegador por Javi.
 
 ### 2026-06-04 — Dashboard por bloque + vuelta a la cuenta del gasto
 

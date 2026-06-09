@@ -18,7 +18,7 @@ else if (accounts.Count == 0)
 }
 else
 {
-    <div class="stagger">
+    <div class="container-narrow stagger">
     <h2>Categorías</h2>
 
     <AccountTabs Accounts="accounts"
@@ -80,7 +80,7 @@ else
     {
         @foreach (var group in currentCategories.GroupBy(c => c.Block).OrderBy(g => BlockOrder(g.Key)))
         {
-            <h6 class="text-uppercase text-muted mt-3">@BlockLabel(group.Key)</h6>
+            <h6 class="cat-group-label">@BlockLabel(group.Key)</h6>
             <ul class="list-group mb-2">
                 @foreach (var cat in group.OrderBy(c => c.Name))
                 {
@@ -103,6 +103,26 @@ else
     }
     </div>
 }
+
+<style>
+    .container-narrow {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    .container-narrow > h2 {
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: 16px;
+    }
+    .cat-group-label {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        font-weight: 700;
+        margin: 20px 0 8px;
+    }
+</style>
 
 @code {
     private bool isLoading = true;
