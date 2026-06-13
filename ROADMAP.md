@@ -216,6 +216,15 @@ Ninguno. (Mayor exposición teóricacorrige: toda la seguridad depende de RLS �
 
 ## Cambios y notas posteriores
 
+### 2026-06-13 — Restante del ingreso, gastos compactos e iconos editar/borrar
+
+Sesión de pulido sobre la vista del mes, el home y las categorías:
+
+1. **Restante del ingreso en `/mes`.** Nueva fila bajo el "Saldo final" que muestra lo que queda **del ingreso de este mes, sin contar el saldo inicial**: personal = nómina − aporte − gastos ("Restante de nómina"); compartida = aporte − gastos ("Restante del aporte"). Muestra "—" si el ingreso aún no está definido. Dos helpers puros nuevos en `Helpers/SaldoCalculator.cs`: `RestanteNomina` y `RestanteAporte` (misma filosofía que `SaldoFinal*`).
+2. **Sin categoría duplicada.** En `/mes`, cuando un gasto no tiene descripción, el título ya muestra la categoría; la línea de detalle de abajo ya no la repite (solo la fecha). Con descripción se mantiene "fecha · categoría".
+3. **Home sin botón "Añadir gasto".** Se quitó la tarjeta-CTA morada (y el CSS que solo usaba ella: `.cta-primary`, `.cta-icon`). Para añadir gasto queda el FAB "+" de la barra inferior y el botón dentro de `/mes`.
+4. **Editar/Borrar como iconos (lápiz y papelera).** En `/mes` y `/categorias` los botones de texto pasan a iconos SVG (Bootstrap Icons), con `title`/`aria-label`. En `/mes` van en la **misma fila** que importe y descripción (antes ocupaban una fila extra → cada gasto era el doble de alto). Clase reutilizable `.icon-btn` / `.icon-btn-danger` (hover coral) movida al **CSS global** (`app.css`), no al `<style>` de la página, para poder compartirla entre pantallas. *(Gotcha recurrente: un `<style>` dentro de un `.razor` solo está en el DOM mientras esa página se muestra.)*
+
 ### 2026-06-09 — Rediseño visual completo: tema oscuro "Nocturne" + navegación inferior
 
 Restyle integral de toda la app a una estética de banca premium (referencia: Revolut), pensada para uso mayoritario en móvil. Decisiones tomadas con Javi: tema **oscuro permanente**, navegación **barra inferior + botón "+" central**, acento **índigo** (se mantiene la identidad), tipografía **Inter** (Google Fonts).
