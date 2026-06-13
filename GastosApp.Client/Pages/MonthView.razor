@@ -91,6 +91,13 @@ else
                         @(SaldoFinal() is decimal sf1 ? FormatMoney(sf1) : "—")
                     </span>
                 </div>
+
+                <div class="balance-row balance-restante">
+                    <span class="balance-label">Restante del aporte</span>
+                    <span class="balance-value money @(Restante() < 0 ? "negative" : "positive")">
+                        @(Restante() is decimal re1 ? FormatMoney(re1) : "—")
+                    </span>
+                </div>
             }
             else
             {
@@ -142,6 +149,13 @@ else
                         @(SaldoFinal() is decimal sf2 ? FormatMoney(sf2) : "—")
                     </span>
                 </div>
+
+                <div class="balance-row balance-restante">
+                    <span class="balance-label">Restante de nómina</span>
+                    <span class="balance-value money @(Restante() < 0 ? "negative" : "positive")">
+                        @(Restante() is decimal re2 ? FormatMoney(re2) : "—")
+                    </span>
+                </div>
             }
         </div>
 
@@ -191,7 +205,12 @@ else
                                                 </div>
                                                 <div class="expense-meta text-muted small">
                                                     @exp.ExpenseDate.ToString("dd MMM", AppFormat.Es)
-                                                    · @(CategoryOf(exp.CategoryId)?.Name ?? "—")
+                                                    @* La categoría solo se repite aquí cuando el título es la descripción;
+                                                       si no hay descripción, el título ya es la categoría. *@
+                                                    @if (!string.IsNullOrWhiteSpace(exp.Description))
+                                                    {
+                                                        <text> · @(CategoryOf(exp.CategoryId)?.Name ?? "—")</text>
+                                                    }
                                                 </div>
                                             </div>
                                             <div class="expense-amount">@FormatMoney(exp.Amount)</div>
@@ -328,6 +347,13 @@ else
     /* Fila del saldo final, destacada */
     .balance-final .balance-label { color: var(--text); font-size: 1.02rem; }
     .balance-final .balance-value { font-size: 1.18rem; }
+
+    /* Restante del ingreso: secundaria, separada con una línea fina */
+    .balance-restante {
+        margin-top: 4px;
+        padding-top: 10px;
+        border-top: 1px dashed var(--border);
+    }
 
     /* Tarjetas de bloque (desplegables) */
     .block-card {
@@ -667,6 +693,24 @@ else
         {
             return SaldoCalculator.SaldoFinalPersonal(
                 opening, currentBudget?.Income ?? 0m, AporteACompartida(), currentTotal);
+        }
+    }
+
+    /// <summary>
+    /// Lo que queda del ingreso del mes (nómina o aporte) sin contar el saldo
+    /// inicial. Devuelve null si el ingreso aún no está definido.
+    /// </summary>
+    private decimal? Restante()
+    {
+        if (IsCurrentAccountShared)
+        {
+            if (currentBudget is null) return null;
+            return SaldoCalculator.RestanteAporte(currentBudget.Amount, currentTotal);
+        }
+        else
+        {
+            if (currentBudget?.Income is not decimal income) return null;
+            return SaldoCalculator.RestanteNomina(income, AporteACompartida(), currentTotal);
         }
     }
 

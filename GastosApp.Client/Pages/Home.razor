@@ -35,20 +35,7 @@ else
             </div>
         </div>
 
-        @* CTA principal: añadir gasto *@
-        <a href="nuevo-gasto" class="cta-card cta-primary">
-            <div class="cta-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-                </svg>
-            </div>
-            <div class="cta-body">
-                <div class="cta-title">Añadir gasto</div>
-                <div class="cta-subtitle">Registra un gasto nuevo</div>
-            </div>
-        </a>
-
-        @* Dashboard: destacado como segunda card *@
+        @* Dashboard: destacado como primera card *@
         <a href="dashboard" class="cta-card">
             <div class="cta-icon-secondary">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
@@ -174,29 +161,6 @@ else
         color: var(--text);
     }
 
-    .cta-primary {
-        background-image: var(--accent-gradient);
-        border: none;
-        color: #fff;
-        box-shadow: 0 8px 22px rgba(99, 102, 241, 0.35);
-    }
-
-    .cta-primary:hover {
-        background-image: var(--accent-gradient);
-        color: #fff;
-        box-shadow: 0 10px 26px rgba(99, 102, 241, 0.45);
-    }
-
-    .cta-icon {
-        background: rgba(255, 255, 255, 0.18);
-        color: #fff;
-        border-radius: 12px;
-        padding: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
     .cta-icon-secondary {
         background: var(--accent-soft);
         color: var(--accent-hover);
@@ -216,7 +180,6 @@ else
         margin-top: 1px;
         color: var(--text-muted);
     }
-    .cta-primary .cta-subtitle { color: rgba(255, 255, 255, 0.85); }
 
     .cta-title-sm { font-weight: 700; font-size: 0.95rem; }
 

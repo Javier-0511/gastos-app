@@ -28,4 +28,19 @@ public static class SaldoCalculator
     /// </summary>
     public static decimal SaldoFinalPersonal(decimal opening, decimal nomina, decimal aporteACompartida, decimal gastos) =>
         opening + nomina - aporteACompartida - gastos;
+
+    /// <summary>
+    /// Lo que queda de la nómina del mes tras restar el aporte a la compartida
+    /// y los gastos personales. A diferencia del saldo final, NO cuenta el
+    /// saldo inicial: mide cuánto te sobra solo del ingreso de este mes.
+    /// </summary>
+    public static decimal RestanteNomina(decimal nomina, decimal aporteACompartida, decimal gastos) =>
+        nomina - aporteACompartida - gastos;
+
+    /// <summary>
+    /// Lo que queda del aporte conjunto del mes tras restar los gastos.
+    /// Como en <see cref="RestanteNomina"/>, NO cuenta el saldo inicial.
+    /// </summary>
+    public static decimal RestanteAporte(decimal aporteConjunto, decimal gastos) =>
+        aporteConjunto - gastos;
 }
