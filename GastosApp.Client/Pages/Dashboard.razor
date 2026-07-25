@@ -38,7 +38,7 @@ else
             @if (disponibleTotal is decimal disp)
             {
                 <div class="budget-summary">
-                    <span class="bs-spent">@FormatMoney(currentMonthTotal)</span>
+                    <span class="bs-spent">@FormatMoney(selectedMonthTotal)</span>
                     <span class="bs-of">de @FormatMoney(disp) disponibles</span>
                     @if (Restante >= 0m)
                     {
@@ -65,7 +65,7 @@ else
                 }
                 else
                 {
-                    <span>@DiffArrow @FormatMoney(Math.Abs(currentMonthTotal - previousMonthTotal)) vs mes anterior</span>
+                    <span>@DiffArrow @FormatMoney(Math.Abs(selectedMonthTotal - previousMonthTotal)) vs mes anterior</span>
                 }
             </p>
 
@@ -76,7 +76,7 @@ else
             else
             {
                 <ApexChart TItem="BlockBucket"
-                           @key="@($"pie-{selectedAccountId}")"
+                           @key="@($"pie-{selectedAccountId}-{selectedYear}-{selectedMonth}")"
                            Options="pieOptions"
                            OnDataPointSelection="OnBlockSliceSelected">
                     <ApexPointSeries TItem="BlockBucket"
@@ -145,7 +145,8 @@ else
             {
                 <ApexChart TItem="MonthBucket"
                            @key="@($"evolution-{selectedAccountId}")"
-                           Options="evolutionOptions">
+                           Options="evolutionOptions"
+                           OnDataPointSelection="OnMonthBarSelected">
                     <ApexPointSeries TItem="MonthBucket"
                                      Items="last6Months"
                                      Name="Gastado"
@@ -153,6 +154,9 @@ else
                                      XValue='m => m.Label'
                                      YValue="m => m.Total" />
                 </ApexChart>
+                <p class="evolution-hint text-muted small mb-0 mt-1">
+                    Toca un mes para ver su reparto arriba.
+                </p>
             }
         </div>
     </div>
@@ -337,11 +341,20 @@ else
     private Dictionary<Guid, Category> categoryMap = new();
 
     private Guid selectedAccountId;
-    private int currentYear;
-    private int currentMonth;
 
-    private decimal currentMonthTotal = 0m;
+    // Mes que se muestra en la tarta y el resumen. Arranca en el mes de hoy y
+    // cambia al tocar una barra del gráfico de evolución. El gráfico de barras,
+    // en cambio, siempre enseña los últimos 6 meses reales (anclado a hoy).
+    private int selectedYear;
+    private int selectedMonth;
+
+    private decimal selectedMonthTotal = 0m;
     private decimal previousMonthTotal = 0m;
+
+    // Gastos de la cuenta activa en todo el rango cargado (~7 meses). Se piden
+    // una sola vez en LoadData y se reutilizan al cambiar de mes en la tarta,
+    // sin volver a consultar Supabase.
+    private List<Expense> allExpenses = new();
 
     private List<MonthBucket> last6Months = new();
     private List<BlockBucket> blockBreakdown = new();
@@ -359,7 +372,7 @@ else
     private List<BlockBucket> donutSlices = new();
 
     // Lo que queda por gastar (puede ser negativo si te has pasado).
-    private decimal Restante => (disponibleTotal ?? 0m) - currentMonthTotal;
+    private decimal Restante => (disponibleTotal ?? 0m) - selectedMonthTotal;
 
     // Bloque cuyo recuadro de categorías está abierto (null = ninguno).
     private string? selectedBlockKey;
@@ -421,7 +434,7 @@ else
     {
         get
         {
-            var date = new DateTime(currentYear, currentMonth, 1);
+            var date = new DateTime(selectedYear, selectedMonth, 1);
             var raw = date.ToString("MMMM yyyy", Es);
             return char.ToUpper(raw[0]) + raw[1..];
         }
@@ -431,8 +444,8 @@ else
     {
         get
         {
-            if (currentMonthTotal > previousMonthTotal) return "↑";
-            if (currentMonthTotal < previousMonthTotal) return "↓";
+            if (selectedMonthTotal > previousMonthTotal) return "↑";
+            if (selectedMonthTotal < previousMonthTotal) return "↓";
             return "•";
         }
     }
@@ -442,8 +455,8 @@ else
         get
         {
             if (previousMonthTotal == 0) return "flat";
-            if (currentMonthTotal > previousMonthTotal) return "up";
-            if (currentMonthTotal < previousMonthTotal) return "down";
+            if (selectedMonthTotal > previousMonthTotal) return "up";
+            if (selectedMonthTotal < previousMonthTotal) return "down";
             return "flat";
         }
     }
@@ -457,8 +470,8 @@ else
         }
 
         var today = DateTime.Today;
-        currentYear = today.Year;
-        currentMonth = today.Month;
+        selectedYear = today.Year;
+        selectedMonth = today.Month;
 
         accounts = (await Accounts.GetMyAccountsAsync())
             .OrderBy(a => a.IsShared)
@@ -488,17 +501,23 @@ else
 
     private async Task LoadData()
     {
-        // Rango: 6 meses hacia atrás contando el actual.
-        var firstOfCurrentMonth = new DateTime(currentYear, currentMonth, 1);
-        var rangeStart = firstOfCurrentMonth.AddMonths(-5);
-        var rangeEnd = firstOfCurrentMonth.AddMonths(1);
+        // El gráfico de barras SIEMPRE muestra los últimos 6 meses reales,
+        // anclados al mes de hoy (no al mes que estés viendo en la tarta).
+        var today = DateTime.Today;
+        var firstOfToday = new DateTime(today.Year, today.Month, 1);
+        var rangeStart = firstOfToday.AddMonths(-5);   // primera barra de la gráfica
+        var rangeEnd = firstOfToday.AddMonths(1);       // fin del mes de hoy
 
-        // Una sola query para los 6 meses; filtramos en memoria.
-        var allExpenses = (await Expenses.GetByDateRangeAsync(rangeStart, rangeEnd))
+        // Pedimos un mes extra por detrás para poder comparar "vs mes anterior"
+        // aunque selecciones la barra más antigua de la gráfica.
+        var queryStart = rangeStart.AddMonths(-1);
+
+        // Una sola query para todo el rango; luego filtramos en memoria.
+        allExpenses = (await Expenses.GetByDateRangeAsync(queryStart, rangeEnd))
             .Where(e => e.AccountId == selectedAccountId)
             .ToList();
 
-        // === Evolución últimos 6 meses ===
+        // === Evolución últimos 6 meses (barras) ===
         last6Months = new();
         for (int i = 0; i < 6; i++)
         {
@@ -510,23 +529,36 @@ else
             last6Months.Add(new MonthBucket(monthStart, total));
         }
 
-        // === KPI: mes actual y anterior ===
-        var prevMonthStart = firstOfCurrentMonth.AddMonths(-1);
-        currentMonthTotal = allExpenses
-            .Where(e => e.ExpenseDate >= firstOfCurrentMonth && e.ExpenseDate < rangeEnd)
+        // La tarta, el resumen y el desglose se calculan aparte, para el mes
+        // seleccionado. Al arrancar es el mes de hoy; luego cambia al tocar barra.
+        await BuildSelectedMonth();
+    }
+
+    // Recalcula la tarta, el resumen y el desglose por bloque para el mes
+    // seleccionado (selectedYear/selectedMonth), reutilizando los gastos ya
+    // cargados en allExpenses. Solo vuelve a Supabase a por el presupuesto del mes.
+    private async Task BuildSelectedMonth()
+    {
+        var firstOfSelected = new DateTime(selectedYear, selectedMonth, 1);
+        var selectedEnd = firstOfSelected.AddMonths(1);
+        var prevStart = firstOfSelected.AddMonths(-1);
+
+        // === KPI: total del mes seleccionado y del anterior ===
+        selectedMonthTotal = allExpenses
+            .Where(e => e.ExpenseDate >= firstOfSelected && e.ExpenseDate < selectedEnd)
             .Sum(e => e.Amount);
         previousMonthTotal = allExpenses
-            .Where(e => e.ExpenseDate >= prevMonthStart && e.ExpenseDate < firstOfCurrentMonth)
+            .Where(e => e.ExpenseDate >= prevStart && e.ExpenseDate < firstOfSelected)
             .Sum(e => e.Amount);
 
-        // === Reparto por bloque del mes actual ===
+        // === Reparto por bloque del mes seleccionado ===
         // Agrupamos primero por bloque (Fijos, Comida...) y, dentro de cada
         // bloque, por categoría, para poder desplegar el detalle al hacer clic.
-        var currentMonthExpenses = allExpenses
-            .Where(e => e.ExpenseDate >= firstOfCurrentMonth && e.ExpenseDate < rangeEnd)
+        var selectedExpenses = allExpenses
+            .Where(e => e.ExpenseDate >= firstOfSelected && e.ExpenseDate < selectedEnd)
             .ToList();
 
-        blockBreakdown = currentMonthExpenses
+        blockBreakdown = selectedExpenses
             .GroupBy(e => CategoryBlockKey(e.CategoryId))
             .Select(g => new BlockBucket(
                 g.Key,
@@ -540,9 +572,9 @@ else
             .OrderBy(b => Blocks.Order(b.Key))
             .ToList();
 
-        // === Dinero disponible del mes (total del rosco) ===
+        // === Dinero disponible del mes seleccionado (total del rosco) ===
         // Leemos el presupuesto de la cuenta-mes (saldo inicial + aporte/nómina).
-        currentBudget = await Budgets.GetForMonthAsync(selectedAccountId, currentYear, currentMonth);
+        currentBudget = await Budgets.GetForMonthAsync(selectedAccountId, selectedYear, selectedMonth);
         var account = accounts.First(a => a.Id == selectedAccountId);
 
         // En la cuenta personal parte del dinero se va como aporte a la compartida,
@@ -554,7 +586,7 @@ else
             var sharedAccount = accounts.FirstOrDefault(a => a.IsShared);
             if (sharedAccount is not null)
             {
-                var sharedBudget = await Budgets.GetForMonthAsync(sharedAccount.Id, currentYear, currentMonth);
+                var sharedBudget = await Budgets.GetForMonthAsync(sharedAccount.Id, selectedYear, selectedMonth);
                 aporteACompartida = SaldoCalculator.AporteACompartida(
                     sharedBudget?.Amount ?? 0m, MyShareInShared);
             }
@@ -645,6 +677,22 @@ else
             selectedBlockKey = blockBreakdown[idx].Key;
     }
 
+    // Clic en una barra del gráfico de evolución: mueve la tarta a ese mes.
+    // Reutiliza los gastos ya cargados; solo pide el presupuesto de ese mes.
+    private async Task OnMonthBarSelected(SelectedData<MonthBucket> data)
+    {
+        var idx = data.DataPointIndex;
+        if (idx < 0 || idx >= last6Months.Count) return;
+
+        var month = last6Months[idx].Month;
+        if (month.Year == selectedYear && month.Month == selectedMonth) return;
+
+        selectedYear = month.Year;
+        selectedMonth = month.Month;
+        selectedBlockKey = null;   // cerramos el detalle del bloque del mes anterior
+        await BuildSelectedMonth();
+    }
+
     private async Task SelectAccount(Guid accountId)
     {
         if (accountId == selectedAccountId) return;
@@ -660,7 +708,7 @@ else
         disponibleTotal = null;
         currentBudget = null;
         selectedBlockKey = null;
-        currentMonthTotal = 0m;
+        selectedMonthTotal = 0m;
         previousMonthTotal = 0m;
         StateHasChanged();
         await Task.Yield();

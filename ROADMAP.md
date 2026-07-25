@@ -112,7 +112,7 @@ Equivalente al H15/H16 del Excel.
     - Pantalla `/dashboard` con pestañas Personal / Compartida.
     - KPI: total mes + comparativa vs mes anterior (↑ rojo / ↓ verde).
     - Tarta donut: **reparto por bloque** (color fijo por bloque) con leyenda clicable. Al tocar un bloque (leyenda o porción del donut) se despliega un recuadro con sus categorías y lo gastado en cada una. *(2026-06-04: antes era por categoría.)*
-    - Gráfico de barras: evolución últimos 6 meses (debajo del rosco).
+    - Gráfico de barras: evolución últimos 6 meses (debajo del rosco). **Clicable** (2026-07-25): al tocar una barra, la tarta de arriba cambia a ese mes.
     - Una sola query al rango de 6 meses (`GetByDateRangeAsync`) y agregaciones en memoria.
     - Truco contra el "ghost data" al cambiar pestañas: `@key` ligado a `selectedAccountId` + reset de colecciones + `Task.Yield()` antes de recargar.
 - [ ] ~~Vista de categorías con tarta de gastos~~ (cubierto por la tarta del dashboard).
@@ -215,6 +215,16 @@ Ninguno. (Mayor exposición teóricacorrige: toda la seguridad depende de RLS �
 ---
 
 ## Cambios y notas posteriores
+
+### 2026-07-25 — Dashboard: la tarta cambia de mes al tocar una barra
+
+Antes el Dashboard fijaba el mes a hoy y el donut mostraba **siempre** el mes vigente. Ahora, al tocar una barra del gráfico "Evolución últimos 6 meses", la tarta, el resumen (gastado / disponible / restante) y la comparación "vs mes anterior" pasan a ese mes.
+
+- Separado el **mes de hoy** (ancla del gráfico de barras: siempre los últimos 6 meses reales) del **mes seleccionado** (`selectedYear`/`selectedMonth`, el que pinta la tarta). Renombrado `currentYear/Month` → `selectedYear/Month` y `currentMonthTotal` → `selectedMonthTotal` para que el nombre diga la verdad.
+- `LoadData()` partido en dos: una parte carga los gastos y las 6 barras (anclado a hoy); la nueva `BuildSelectedMonth()` calcula tarta/resumen del mes elegido. Los gastos se piden **una sola vez** (campo `allExpenses`) y se reutilizan al cambiar de mes; solo se vuelve a Supabase a por el presupuesto de ese mes.
+- Se carga **un mes extra por detrás** para que "vs mes anterior" funcione también en la barra más antigua de la gráfica.
+- Barras clicables con `OnDataPointSelection="OnMonthBarSelected"` (mismo patrón que ya usa la tarta desde el 2026-06-04). El `@key` del donut incluye el mes seleccionado para forzar un repintado limpio al cambiar. Hint bajo las barras: "Toca un mes para ver su reparto arriba."
+- Build verde (0 warnings). Arranque local verificado (sirve sin errores). **Pendiente**: verificación visual del clic en navegador por Javi (Dashboard tras login).
 
 ### 2026-06-13 — Restante del ingreso, gastos compactos e iconos editar/borrar
 
