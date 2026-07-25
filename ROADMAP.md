@@ -225,6 +225,7 @@ Antes el Dashboard fijaba el mes a hoy y el donut mostraba **siempre** el mes vi
 - Se carga **un mes extra por detrás** para que "vs mes anterior" funcione también en la barra más antigua de la gráfica.
 - Barras clicables con `OnDataPointSelection="OnMonthBarSelected"` (mismo patrón que ya usa la tarta desde el 2026-06-04). El `@key` del donut incluye el mes seleccionado para forzar un repintado limpio al cambiar. Hint bajo las barras: "Toca un mes para ver su reparto arriba."
 - Build verde (0 warnings). Arranque local verificado (sirve sin errores). **Pendiente**: verificación visual del clic en navegador por Javi (Dashboard tras login).
+- **Fix de seguimiento (mismo día):** al pasar el ratón por una barra aparecía una banda translúcida a toda la altura del gráfico (el *crosshair* del eje X que ApexCharts pinta por defecto); sobre el tema oscuro quedaba como un sombreado sucio. Apagado con `Xaxis.Crosshairs.Show = false` en `evolutionOptions`. El resaltado de hover/selección de la propia barra se mantiene (feedback útil).
 
 ### 2026-06-13 — Restante del ingreso, gastos compactos e iconos editar/borrar
 

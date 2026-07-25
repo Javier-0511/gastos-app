@@ -401,6 +401,13 @@ else
         Yaxis = new List<YAxis>
         {
             new YAxis { Labels = new YAxisLabels { Formatter = "function (v) { return v.toLocaleString('es-ES') + ' €'; }" } }
+        },
+        // Al pasar el ratón por una barra, ApexCharts pinta por defecto una banda
+        // vertical translúcida a toda la altura del gráfico (el "crosshair" del
+        // eje X). En el tema oscuro queda como un sombreado feo, así que lo apagamos.
+        Xaxis = new XAxis
+        {
+            Crosshairs = new AxisCrosshairs { Show = false }
         }
     };
 
