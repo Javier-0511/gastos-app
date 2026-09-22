@@ -21,8 +21,8 @@ Este archivo da contexto permanente a Claude Code para cualquier sesión sobre e
 
 App para controlar mis gastos personales y de cuenta compartida con mi pareja Marta (de momento solo yo uso la app; ella entra en una fase posterior). Reemplaza una hoja Excel con:
 - Cuenta personal mía + cuenta compartida (split 50/50).
-- 4 bloques en la compartida: fijos, comida, variables, minicompras.
-- Bloque individual aparte para gastos personales.
+- 3 bloques en la compartida: fijos, comida, variables.
+- Cuenta personal aparte, con sus propios bloques: fijos, ocio, variables, inversiones.
 - Categorías/tags (padel, gasolina, cerves, etc.) sumadas por categoría.
 - Previsión mensual vs gasto real, con "resto disponible".
 - Vista por mes.
@@ -63,7 +63,7 @@ Tablas en `public` con Row Level Security activa:
 - **profiles** (id uuid PK→auth.users, display_name, created_at)
 - **accounts** (id, name, is_shared, owner_id→profiles, created_at)
 - **account_members** (account_id, user_id, share_percent default 50, joined_at) — PK compuesta
-- **categories** (id, account_id, name, block CHECK in [fijo,comida,variable,minicompra,individual], color, icon, created_at) — unique(account_id, name)
+- **categories** (id, account_id, name, block CHECK in [fijo,comida,variable,ocio,inversion], color, icon, created_at) — unique(account_id, name)
 - **expenses** (id, account_id, category_id, paid_by→profiles, description, amount, expense_date, created_at)
 - **monthly_budgets** (id, account_id, year, month, amount) — unique(account_id, year, month)
 

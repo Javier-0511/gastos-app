@@ -208,8 +208,9 @@ else
         formName = cat.Name;
 
         // Si el bloque de la categoría ya no es un bloque ofrecido para esta
-        // cuenta (p. ej. 'individual' legacy en personal), preseleccionamos el
-        // primer bloque válido para que al guardar quede migrada.
+        // cuenta (un bloque retirado, como en su día 'minicompra'),
+        // preseleccionamos el primer bloque válido para que al guardar quede
+        // migrada.
         var valid = BlocksFor(selectedAccountId);
         formBlock = valid.Contains(cat.Block) ? cat.Block : valid.First();
 

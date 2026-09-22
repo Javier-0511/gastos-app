@@ -639,7 +639,7 @@ else
         categoryId is Guid id && categoryMap.TryGetValue(id, out var c) ? c : null;
 
     // Bloques estándar de la cuenta + cualquier bloque presente en los gastos
-    // del mes (p. ej. categorías legacy en 'individual' aún sin reasignar),
+    // del mes (p. ej. categorías en un bloque ya retirado y sin reasignar),
     // para no ocultar ningún gasto. Ordenados.
     private IEnumerable<string> BlocksToShow()
     {

@@ -53,3 +53,49 @@ ALTER TABLE public.expenses
 --   SELECT * FROM public.expenses WHERE category_id IS NULL;
 -- Puedes borrarlos:   DELETE FROM public.expenses WHERE category_id IS NULL;
 -- o editarlos desde la app para asignarles una categoría nueva.
+
+-- =====================================================
+-- 2026-09-22 — Adiós al bloque 'minicompra'
+-- =====================================================
+-- Reorganización de bloques para que las categorías caigan donde tocan:
+--
+--   Compartida: el bloque 'minicompra' desaparece. Sus dos categorías
+--   (Chino, Otros) pasan a 'variable', que queda con: Ocio, Restaurante,
+--   Viaje, Chino, Otros.
+--
+--   Personal: el bloque 'fijo' contenía cosas que no son fijas. Moto y
+--   Peluquería pasan a 'variable'; 'fijo' se queda con Gasolina, Padel y
+--   Suscripciones. La categoría "Clases padel" se fusiona en "Padel"
+--   (sus gastos se reasignan antes de borrarla, porque la FK está en
+--   ON DELETE RESTRICT y si no la BBDD rechaza el DELETE).
+--
+-- Los movimientos de datos ya se ejecutaron el 2026-09-22. Se dejan aquí
+-- documentados por si hubiera que rehacerlos en otro entorno:
+--
+--   UPDATE public.categories SET block = 'variable'
+--    WHERE id IN ('7016a0bb-3cba-439d-abd3-41567ed0f520',   -- Chino
+--                 '39c373e9-9dfe-4753-a2d4-261914e12762');  -- Otros
+--
+--   UPDATE public.expenses
+--      SET category_id = 'f9c90c82-82e8-4336-b94a-f658898d5868'    -- Padel
+--    WHERE category_id = '82c72aa3-3171-432f-ad2e-be68b2d95762';   -- Clases padel
+--   DELETE FROM public.categories
+--    WHERE id = '82c72aa3-3171-432f-ad2e-be68b2d95762';
+--
+--   UPDATE public.categories SET block = 'variable'
+--    WHERE id IN ('4f6903d5-323b-456e-a90c-1d52b5266215',   -- Moto
+--                 '7f09866f-79c7-4c58-80c4-f30b549ca468');  -- Peluquería
+
+-- Cerramos la puerta: 'minicompra' deja de ser un bloque válido. De paso
+-- retiramos 'individual', el bloque legacy de la personal que quedó de la
+-- migración de 2026-05-25: ya no lo usa ninguna categoría (comprobado).
+--
+-- Si quedara alguna categoría en 'minicompra' o 'individual', este ALTER
+-- falla — que es justo lo que queremos (avisa en vez de dejar datos
+-- inconsistentes). Para comprobarlo antes:
+--   SELECT name, block FROM public.categories
+--    WHERE block IN ('minicompra', 'individual');
+ALTER TABLE public.categories DROP CONSTRAINT IF EXISTS categories_block_check;
+ALTER TABLE public.categories
+    ADD CONSTRAINT categories_block_check
+    CHECK (block IN ('fijo', 'comida', 'variable', 'ocio', 'inversion'));

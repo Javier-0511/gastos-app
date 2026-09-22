@@ -9,11 +9,13 @@ namespace GastosApp.Client.Models;
 public static class Blocks
 {
     // Bloques de la cuenta compartida (tarjeta conjunta).
-    public static readonly string[] Shared = { "fijo", "comida", "variable", "minicompra" };
+    // 'minicompra' se eliminó (2026-09-22): sus categorías (Chino, Otros)
+    // pasaron a 'variable', que es donde encajaban de verdad.
+    public static readonly string[] Shared = { "fijo", "comida", "variable" };
 
-    // Bloques de la cuenta personal. 'individual' NO se ofrece para nuevas
-    // categorías (es legacy), pero sigue siendo válido en la BBDD para no
-    // romper las categorías personales antiguas hasta que se reasignen.
+    // Bloques de la cuenta personal. El antiguo 'individual' se eliminó
+    // (2026-09-22) una vez comprobado que ya no quedaba ninguna categoría
+    // usándolo.
     public static readonly string[] Personal = { "fijo", "ocio", "variable", "inversion" };
 
     /// <summary>Bloques disponibles para crear categorías según el tipo de cuenta.</summary>
@@ -25,8 +27,6 @@ public static class Blocks
         "fijo" => "Fijos",
         "comida" => "Comida",
         "variable" => "Variables",
-        "minicompra" => "Minicompras",
-        "individual" => "Individual",
         "ocio" => "Ocio",
         "inversion" => "Inversiones",
         _ => block
@@ -38,10 +38,8 @@ public static class Blocks
         "fijo" => 1,
         "comida" => 2,
         "variable" => 3,
-        "minicompra" => 4,
-        "ocio" => 5,
-        "inversion" => 6,
-        "individual" => 7,
+        "ocio" => 4,
+        "inversion" => 5,
         _ => 99
     };
 }

@@ -169,7 +169,8 @@ Equivalente al H15/H16 del Excel.
 | Repo | Público | GitHub Pages free requiere público, sin secretos en el código |
 | Split común | Tabla `account_members` con `share_percent` | Permite añadir Marta sin migrar nada |
 | Categorías | Por cuenta, no globales | Permite que personal y compartida tengan tags distintos |
-| Bloques | Campo `block` enum en `categories`. Compartida: fijo/comida/variable/minicompra. Personal: fijo/ocio/variable/inversion (`individual` queda como legacy) | Estructura distinta por tipo de cuenta; definición central en `Models/Blocks.cs` |
+| Bloques | Campo `block` enum en `categories`. Compartida: fijo/comida/variable. Personal: fijo/ocio/variable/inversion | Estructura distinta por tipo de cuenta; definición central en `Models/Blocks.cs` |
+| Fin de `minicompra` e `individual` (2026-09-22) | Ambos bloques eliminados; Chino y Otros movidos a `variable` | Minicompras y variables eran lo mismo en la práctica, e `individual` ya no lo usaba ninguna categoría; dos bloques menos que mantener |
 | Borrado de categorías | FK `expenses.category_id` con `ON DELETE RESTRICT` | No dejar borrar categorías con gastos (antes era SET NULL y dejaba gastos huérfanos) |
 | Routing | Rutas relativas (`NavigateTo("login")`) | Compatible con subdirectorio de GitHub Pages |
 | "Cuenta compartida" | = tarjeta bancaria conjunta, no compartición entre usuarios de la app | Yo gestiono ambas; la distinción real es "qué tarjeta pagó" |
